@@ -12,7 +12,7 @@ PttP::PttP(QWidget *parent)
 	connect(ui.pushButtonStart, &QPushButton::pressed, mIOThread, &IOThread::SendACK);
 	connect(ui.pushButtonStop, &QPushButton::pressed, mIOThread, &IOThread::SendENQ);
 
-	connect(mIOThread->mPort, &QSerialPort::readyRead, this, &PttP::ReadFromPort);
+	connect(mIOThread->GetPort(), &QSerialPort::readyRead, this, &PttP::ReadFromPort);
 }
 
 /*-------------------------------------------------------------------------------------------------
@@ -42,12 +42,12 @@ void PttP::selectFile()
 		this,							// Parent object
 		tr("Choose File to Open"),		// Title
 		"./",							// Default directory
-		tr("Text File (*.txt)")			// File types
+		tr("Text File ( *.txt)")			// File types
 	);
 	ui.labelSelectedFile->setText(mSelectedFileName);
 }
 
 void PttP::ReadFromPort()
 {
-	ui.plainTextEdit->appendPlainText(mIOThread->GetDataFromPort());
+	ui.plainTextEdit->insertPlainText(mIOThread->GetDataFromPort());
 }

@@ -17,8 +17,14 @@ public:
 	IOThread(QObject *parent);
 	~IOThread();
 
+	QSerialPort* GetPort();
 	QString GetDataFromPort();
 
+protected:
+	void run();
+
+private:
+	bool mRunning;
 	QSerialPort* mPort;
 
 public slots:

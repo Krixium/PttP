@@ -5,6 +5,7 @@ const QByteArray IOThread::ENQ = QByteArray(1, 0x05);
 
 IOThread::IOThread(QObject *parent)
 	: QThread(parent)
+	, mRunning(true)
 	, mPort(new QSerialPort("COM1", this))
 {
 	mPort->setBaudRate(QSerialPort::Baud9600);
@@ -17,7 +18,13 @@ IOThread::IOThread(QObject *parent)
 
 IOThread::~IOThread() 
 {
+	mRunning = false;
 	mPort->close();
+}
+
+QSerialPort* IOThread::GetPort()
+{
+	return mPort;
 }
 
 QString IOThread::GetDataFromPort()
@@ -30,6 +37,14 @@ QString IOThread::GetDataFromPort()
 	}
 
 	return "";
+}
+
+void IOThread::run()
+{
+	while (mRunning) 
+	{
+		// Threading code here
+	}
 }
 
 void IOThread::SendACK()
