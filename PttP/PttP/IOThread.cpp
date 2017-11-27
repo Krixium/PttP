@@ -12,18 +12,20 @@ IOThread::IOThread(QObject *parent)
 	mPort->setParity(QSerialPort::NoParity);
 	mPort->setStopBits(QSerialPort::OneStop);
 	mPort->setFlowControl(QSerialPort::NoFlowControl);
+	mPort->open(QSerialPort::ReadWrite);
+}
+
+IOThread::~IOThread() 
+{
+	mPort->close();
 }
 
 void IOThread::SendACK()
 {
-	mPort->open(QSerialPort::WriteOnly);
 	mPort->write(ACK);
-	mPort->close();
 }
 
 void IOThread::SendENQ()
 {
-	mPort->open(QSerialPort::WriteOnly);
 	mPort->write(ENQ);
-	mPort->close();
 }

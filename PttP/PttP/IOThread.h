@@ -15,7 +15,7 @@ public:
 	const static QByteArray ENQ;
 
 	IOThread(QObject *parent);
-	~IOThread() = default;
+	~IOThread();
 
 private:
 	QSerialPort* mPort;
