@@ -22,7 +22,14 @@ IOThread::~IOThread()
 
 QString IOThread::GetDataFromPort()
 {
-	return QString(mPort->readAll());
+	QByteArray buffer = mPort->readAll();
+	
+	if (buffer == IOThread::ACK)
+	{
+		return "Be Bada Bap";
+	}
+
+	return "";
 }
 
 void IOThread::SendACK()
