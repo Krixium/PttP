@@ -20,6 +20,11 @@ IOThread::~IOThread()
 	mPort->close();
 }
 
+QString IOThread::GetDataFromPort()
+{
+	return QString(mPort->readAll());
+}
+
 void IOThread::SendACK()
 {
 	mPort->write(ACK);

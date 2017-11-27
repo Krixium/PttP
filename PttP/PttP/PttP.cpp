@@ -11,6 +11,8 @@ PttP::PttP(QWidget *parent)
 
 	connect(ui.pushButtonStart, &QPushButton::pressed, mIOThread, &IOThread::SendACK);
 	connect(ui.pushButtonStop, &QPushButton::pressed, mIOThread, &IOThread::SendENQ);
+
+	connect(mIOThread->mPort, &QSerialPort::readyRead, this, &PttP::ReadFromPort);
 }
 
 /*-------------------------------------------------------------------------------------------------
@@ -43,4 +45,9 @@ void PttP::selectFile()
 		tr("Text File (*.txt)")			// File types
 	);
 	ui.labelSelectedFile->setText(mSelectedFileName);
+}
+
+void PttP::ReadFromPort()
+{
+	ui.plainTextEdit->appendPlainText(mIOThread->GetDataFromPort());
 }

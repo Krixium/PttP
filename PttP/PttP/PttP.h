@@ -21,4 +21,7 @@ private:
 
 private slots:
 	void selectFile();
+
+public slots:
+	void ReadFromPort();
 };
