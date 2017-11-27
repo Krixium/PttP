@@ -3,6 +3,7 @@
 #include <QFileDialog>
 #include <QtWidgets/QMainWindow>
 
+#include "IOThread.h"
 #include "ui_PttP.h"
 
 class PttP : public QMainWindow
@@ -15,6 +16,8 @@ public:
 private:
 	Ui::PttPClass ui;
 	QString mSelectedFileName;
+
+	IOThread* mIOThread;
 
 private slots:
 	void selectFile();

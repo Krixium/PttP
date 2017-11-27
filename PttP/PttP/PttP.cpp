@@ -3,9 +3,14 @@
 PttP::PttP(QWidget *parent)
 	: QMainWindow(parent)
 	, mSelectedFileName()
+	, mIOThread(new IOThread(this))
 {
 	ui.setupUi(this);
+
 	connect(ui.pushButtonSelect, &QPushButton::pressed, this, &PttP::selectFile);
+
+	connect(ui.pushButtonStart, &QPushButton::pressed, mIOThread, &IOThread::SendACK);
+	connect(ui.pushButtonStop, &QPushButton::pressed, mIOThread, &IOThread::SendENQ);
 }
 
 /*-------------------------------------------------------------------------------------------------
