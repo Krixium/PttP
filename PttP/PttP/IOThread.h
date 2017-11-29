@@ -20,6 +20,8 @@ public:
 	QSerialPort* GetPort();
 	QString GetDataFromPort();
 
+	void Send(const QByteArray data);
+
 protected:
 	void run();
 
@@ -30,4 +32,7 @@ private:
 public slots:
 	void SendACK();
 	void SendENQ();
+
+signals:
+	void LineReadyToSend();
 };

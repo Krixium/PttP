@@ -18,7 +18,7 @@ public:
 	FileManip(QObject* parent = nullptr);
 	~FileManip();
 
-	QByteArray GetNextBytes(const int numOfBytes);
+	QByteArray GetNextBytes();
 	QByteArray GetPreviousBytes();
 
 private:

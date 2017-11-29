@@ -30,21 +30,27 @@ QSerialPort* IOThread::GetPort()
 QString IOThread::GetDataFromPort()
 {
 	QByteArray buffer = mPort->readAll();
-	
-	if (buffer == IOThread::ACK)
+
+	if (buffer == ACK)
 	{
-		return "Be Bada Bap";
+		emit LineReadyToSend();
+		return "";
 	}
 
-	return "";
+	return buffer;
 }
 
 void IOThread::run()
 {
 	while (mRunning) 
 	{
-		// Threading code here
+		
 	}
+}
+
+void IOThread::Send(const QByteArray data)
+{
+	mPort->write(data);
 }
 
 void IOThread::SendACK()

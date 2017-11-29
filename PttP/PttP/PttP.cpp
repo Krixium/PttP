@@ -12,10 +12,11 @@ PttP::PttP(QWidget *parent)
 	connect(ui.pushButtonSelect, &QPushButton::pressed, mFile, &FileManip::SelectFile);
 	connect(mFile, &FileManip::fileChanged, this, &PttP::SetFileName);
 
-	connect(ui.pushButtonStart, &QPushButton::pressed, mIOThread, &IOThread::SendACK);
-	connect(ui.pushButtonStop, &QPushButton::pressed, mIOThread, &IOThread::SendENQ);
-
 	connect(mIOThread->GetPort(), &QSerialPort::readyRead, this, &PttP::ReadFromPort);
+
+	connect(mIOThread, &IOThread::LineReadyToSend, this, &PttP::SendBytesOverPort);
+
+	mIOThread->start();
 }
 
 void PttP::ReadFromPort()
@@ -26,4 +27,9 @@ void PttP::ReadFromPort()
 void PttP::SetFileName(string newFileName)
 {
 	ui.labelSelectedFile->setText(QString(newFileName.c_str()));
+}
+
+void PttP::SendBytesOverPort()
+{
+	mIOThread->Send(mFile->GetNextBytes());
 }

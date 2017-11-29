@@ -27,4 +27,5 @@ public slots:
 	void ReadFromPort();
 	void SetFileName(string newFileName);
 
+	void SendBytesOverPort();
 };

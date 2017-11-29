@@ -67,11 +67,11 @@ void FileManip::SelectFile()
 --
 -- NOTES:
 --
--- Read x number of bytes from the current file position.
+-- Read 512 bytes from the current file position.
 -- 
 -- The bytes read are also saved to a buffer and can be retrieved again using GetPreviousBytes().
 -------------------------------------------------------------------------------------------------*/
-QByteArray FileManip::GetNextBytes(const int numOfBytes)
+QByteArray FileManip::GetNextBytes()
 {
 	mInStream->get(mBuffer, 512, EOF);
 	return QByteArray(mBuffer);
