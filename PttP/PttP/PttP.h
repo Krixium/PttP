@@ -1,10 +1,14 @@
 #pragma once
 
-#include <QFileDialog>
+#include <string>
+
 #include <QtWidgets/QMainWindow>
 
+#include "FileManip.h"
 #include "IOThread.h"
 #include "ui_PttP.h"
+
+using namespace std;
 
 class PttP : public QMainWindow
 {
@@ -15,13 +19,12 @@ public:
 
 private:
 	Ui::PttPClass ui;
-	QString mSelectedFileName;
 
+	FileManip* mFile;
 	IOThread* mIOThread;
-
-private slots:
-	void selectFile();
 
 public slots:
 	void ReadFromPort();
+	void SetFileName(string newFileName);
+
 };
