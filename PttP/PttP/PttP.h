@@ -24,8 +24,7 @@ private:
 	IOThread* mIOThread;
 
 public slots:
-	void ReadFromPort();
-	void SetFileName(string newFileName);
+	void SetFileName(const string newFileName);
 
 	void SendBytesOverPort();
 };

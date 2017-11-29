@@ -14,7 +14,7 @@ FileManip::~FileManip()
 /*-------------------------------------------------------------------------------------------------
 -- FUNCTION: SelectFile()
 --
--- DATE: November 26, 2017
+-- DATE: November 29, 2017
 --
 -- REVISIONS: N/A
 --
@@ -52,11 +52,11 @@ void FileManip::SelectFile()
 /*-------------------------------------------------------------------------------------------------
 -- FUNCTION: GetNextBytes()
 --
--- DATE: November 26, 2017
+-- DATE: November 29, 2017
 --
 -- REVISIONS: N/A
 --
--- DESIGNER: Benny Wang
+-- DESIGNER: Benny Wang, Delan Elliot
 --
 -- PROGRAMMER: Benny Wang 
 --
@@ -80,7 +80,7 @@ QByteArray FileManip::GetNextBytes()
 /*-------------------------------------------------------------------------------------------------
 -- FUNCTION: GetPreviousBytes()
 --
--- DATE: November 26, 2017
+-- DATE: November 29, 2017
 --
 -- REVISIONS: N/A
 --
