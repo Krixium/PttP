@@ -12,6 +12,8 @@ PttP::PttP(QWidget *parent)
 	connect(ui.pushButtonSelect, &QPushButton::pressed, mFile, &FileManip::SelectFile);
 	connect(mFile, &FileManip::fileChanged, this, &PttP::SetFileName);
 
+	connect(ui.pushButtonStart, &QPushButton::pressed, mIOThread, &IOThread::SendENQ);
+
 	connect(mIOThread, &IOThread::LineReadyToSend, this, &PttP::SendBytesOverPort);
 
 	mIOThread->start();
