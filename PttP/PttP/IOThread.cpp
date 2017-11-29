@@ -1,4 +1,5 @@
 #include "IOThread.h"
+#include <QDebug>
 
 const QByteArray IOThread::ACK = QByteArray(1, 0x06);
 const QByteArray IOThread::ENQ = QByteArray(1, 0x05);
@@ -55,14 +56,17 @@ QSerialPort* IOThread::GetPort()
 void IOThread::GetDataFromPort()
 {
 	QByteArray buffer = mPort->readAll();
+	qDebug() << "Buffer = " << buffer;
 
 	if (buffer == ENQ)
 	{
+		qDebug() << "buffer was ENQ";
 		SendACK();
 	}
 
 	if (buffer == ACK)
 	{
+		qDebug << "buffer was ACK";
 		emit LineReadyToSend();
 	}
 
@@ -116,6 +120,7 @@ void IOThread::run()
 -------------------------------------------------------------------------------------------------*/
 void IOThread::Send(const QByteArray data)
 {
+	qDebug() << "Sending data";
 	mPort->write(data);
 }
 
@@ -139,6 +144,7 @@ void IOThread::Send(const QByteArray data)
 -------------------------------------------------------------------------------------------------*/
 void IOThread::SendACK()
 {
+	qDebug() << "Sending ACK";
 	mPort->write(ACK);
 }
 
@@ -162,5 +168,6 @@ void IOThread::SendACK()
 -------------------------------------------------------------------------------------------------*/
 void IOThread::SendENQ()
 {
+	qDebug() << "Sending ENQ";
 	mPort->write(ENQ);
 }

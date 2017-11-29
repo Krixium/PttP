@@ -1,5 +1,7 @@
 #include "PttP.h"
 
+#include <QDebug>
+
 using namespace std;
 
 PttP::PttP(QWidget *parent)
@@ -64,5 +66,6 @@ void PttP::SetFileName(const string newFileName)
 -------------------------------------------------------------------------------------------------*/
 void PttP::SendBytesOverPort()
 {
+	qDebug() << "Sending bytes to the port";
 	mIOThread->Send(mFile->GetNextBytes());
 }
