@@ -66,7 +66,7 @@ void IOThread::GetDataFromPort()
 
 	if (buffer == ACK)
 	{
-		qDebug << "buffer was ACK";
+		qDebug() << "buffer was ACK";
 		emit LineReadyToSend();
 	}
 
