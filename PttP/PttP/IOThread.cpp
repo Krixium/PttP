@@ -6,7 +6,7 @@ const QByteArray IOThread::ENQ = QByteArray(1, 0x05);
 IOThread::IOThread(QObject *parent)
 	: QThread(parent)
 	, mRunning(true)
-	, mPort(new QSerialPort("COM3", this))
+	, mPort(new QSerialPort("COM1", this))
 {
 	mPort->setBaudRate(QSerialPort::Baud9600);
 	mPort->setDataBits(QSerialPort::Data8);
