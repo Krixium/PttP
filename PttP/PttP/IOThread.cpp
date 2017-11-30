@@ -236,13 +236,20 @@ void IOThread::SendENQ()
 --
 -- NOTES:
 -- Wraps the given data in a frame specified by the Power to the Protocoleriat protocol.
+--
+-- The checksum used is Qt::ChecksumIso3309(CRC-16/X-25)
+--		Poly:	0x1021
+--		Init:	0xFFFF
+--		RefIn:	True
+--		RefOut:	True
+--		XorOut:	0xFFFF
 -------------------------------------------------------------------------------------------------*/
 QByteArray IOThread::makeFrame(const QByteArray& data)
 {
 	QByteArray stuffing = QByteArray(512 - data.size(), 0);
 	stuffing.prepend(data);
 	QByteArray frame = SYN + STX + stuffing;
-	quint16 checksum = qChecksum(data, data.size());
+	quint16 checksum = qChecksum(data, data.size(), Qt::ChecksumIso3309);
 	frame = frame << checksum;
 	return frame;
 }
