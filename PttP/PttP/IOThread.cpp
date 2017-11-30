@@ -1,4 +1,5 @@
 #include "IOThread.h"
+
 #include <QDebug>
 
 const QByteArray IOThread::SYN = QByteArray(1, 0x16);
@@ -49,6 +50,30 @@ IOThread::~IOThread()
 QSerialPort* IOThread::GetPort()
 {
 	return mPort;
+}
+
+/*-------------------------------------------------------------------------------------------------
+-- FUNCTION: SetPort()
+--
+-- DATE: November 29, 2017
+--
+-- REVISIONS: N/A
+--
+-- DESIGNER: Benny Wang
+--
+-- PROGRAMMER: Benny Wang
+--
+-- INTERFACE: void SetPort (void)
+--
+-- NOTES:
+-- A Qt slot.
+--
+-- This function is triggered when a QAction representing a serial port is pressed. This function
+-- will grab the name of the port from that action and set the port to it.
+-------------------------------------------------------------------------------------------------*/
+void IOThread::SetPort()
+{
+	mPort->setPortName(((QAction*)QObject::sender())->text());
 }
 
 /*-------------------------------------------------------------------------------------------------

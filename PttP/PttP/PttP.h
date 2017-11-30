@@ -3,6 +3,7 @@
 #include <string>
 
 #include <QtWidgets/QMainWindow>
+#include <QSerialPortInfo>
 
 #include "FileManip.h"
 #include "IOThread.h"
@@ -22,6 +23,8 @@ private:
 
 	FileManip* mFile;
 	IOThread* mIOThread;
+
+	void populatePortMenu();
 
 public slots:
 	void SetFileName(const string newFileName);

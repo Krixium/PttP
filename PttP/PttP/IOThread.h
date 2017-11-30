@@ -1,6 +1,8 @@
 #pragma once
 
+#include <QAction>
 #include <QByteArray>
+#include <QObject>
 #include <QSerialPort>
 #include <QThread>
 
@@ -40,6 +42,7 @@ public slots:
 	void SendACK();
 	void SendENQ();
 	void GetDataFromPort();
+	void SetPort();
 
 signals:
 	void LineReadyToSend();
