@@ -91,5 +91,8 @@
     <ClInclude Include="ByteArrayOperators.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ControlCharacters.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

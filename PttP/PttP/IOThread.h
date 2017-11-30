@@ -39,6 +39,9 @@ private:
 
 	QByteArray makeFrame(const QByteArray& data);
 
+	bool isDataFrameValid(const QByteArray& frame);
+	string getDataFromFrame(const QByteArray& frame);
+
 public slots:
 	void SendACK();
 	void SendENQ();
