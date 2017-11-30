@@ -1,8 +1,12 @@
 #include "IOThread.h"
 #include <QDebug>
 
-const QByteArray IOThread::ACK = QByteArray(1, 0x06);
-const QByteArray IOThread::ENQ = QByteArray(1, 0x05);
+
+const QByteArray IOThread::SYN = QByteArray(1, 0x16);
+const QByteArray IOThread::STX = QByteArray(1, 0x02);
+const QByteArray IOThread::ACK_FRAME = SYN + QByteArray(1, 0x06);
+const QByteArray IOThread::ENQ_FRAME = SYN + QByteArray(1, 0x05);
+const QByteArray IOThread::EOT_FRAME = SYN + QByteArray(1, 0x04);
 
 IOThread::IOThread(QObject *parent)
 	: QThread(parent)
@@ -58,13 +62,13 @@ void IOThread::GetDataFromPort()
 	QByteArray buffer = mPort->readAll();
 	qDebug() << "Buffer = " << buffer;
 
-	if (buffer == ENQ)
+	if (buffer == ENQ_FRAME)
 	{
 		qDebug() << "buffer was ENQ";
 		SendACK();
 	}
 
-	if (buffer == ACK)
+	if (buffer == ACK_FRAME)
 	{
 		qDebug() << "buffer was ACK";
 		emit LineReadyToSend();
@@ -145,7 +149,7 @@ void IOThread::Send(const QByteArray data)
 void IOThread::SendACK()
 {
 	qDebug() << "Sending ACK";
-	mPort->write(ACK);
+	mPort->write(ACK_FRAME);
 }
 
 /*-------------------------------------------------------------------------------------------------
@@ -169,5 +173,5 @@ void IOThread::SendACK()
 void IOThread::SendENQ()
 {
 	qDebug() << "Sending ENQ";
-	mPort->write(ENQ);
+	mPort->write(ENQ_FRAME);
 }

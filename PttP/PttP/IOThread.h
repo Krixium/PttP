@@ -11,8 +11,12 @@ class IOThread : public QThread
 	Q_OBJECT
 
 public:
-	const static QByteArray ACK;
-	const static QByteArray ENQ;
+	const static QByteArray SYN;
+	const static QByteArray STX;
+
+	const static QByteArray ACK_FRAME;
+	const static QByteArray ENQ_FRAME;
+	const static QByteArray EOT_FRAME;
 
 	IOThread(QObject *parent);
 	~IOThread();
