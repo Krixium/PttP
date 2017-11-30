@@ -7,6 +7,7 @@
 #include <QThread>
 
 #include "ByteArrayOperators.h"
+#include "ControlCharacters.h"
 
 using namespace std;
 
@@ -15,8 +16,8 @@ class IOThread : public QThread
 	Q_OBJECT
 
 public:
-	const static QByteArray SYN;
-	const static QByteArray STX;
+	const static QByteArray SYN_BYTE;
+	const static QByteArray STX_BYTE;
 
 	const static QByteArray ACK_FRAME;
 	const static QByteArray ENQ_FRAME;

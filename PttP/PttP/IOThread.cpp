@@ -2,11 +2,11 @@
 
 #include <QDebug>
 
-const QByteArray IOThread::SYN = QByteArray(1, 0x16);
-const QByteArray IOThread::STX = QByteArray(1, 0x02);
-const QByteArray IOThread::ACK_FRAME = SYN + QByteArray(1, 0x06);
-const QByteArray IOThread::ENQ_FRAME = SYN + QByteArray(1, 0x05);
-const QByteArray IOThread::EOT_FRAME = SYN + QByteArray(1, 0x04);
+const QByteArray IOThread::SYN_BYTE = QByteArray(1, SYN);
+const QByteArray IOThread::STX_BYTE = QByteArray(1, STX);
+const QByteArray IOThread::ACK_FRAME = SYN_BYTE + QByteArray(1, ACK);
+const QByteArray IOThread::ENQ_FRAME = SYN_BYTE + QByteArray(1, ENQ);
+const QByteArray IOThread::EOT_FRAME = SYN_BYTE + QByteArray(1, EOT);
 
 IOThread::IOThread(QObject *parent)
 	: QThread(parent)
@@ -21,6 +21,8 @@ IOThread::IOThread(QObject *parent)
 	mPort->open(QSerialPort::ReadWrite);
 
 	connect(mPort, &QSerialPort::readyRead, this, &IOThread::GetDataFromPort);
+
+	auto asdf = ACK_FRAME;
 }
 
 IOThread::~IOThread()
@@ -246,9 +248,9 @@ void IOThread::SendENQ()
 -------------------------------------------------------------------------------------------------*/
 QByteArray IOThread::makeFrame(const QByteArray& data)
 {
-	QByteArray stuffing = QByteArray(512 - data.size(), 0);
-	stuffing.prepend(data);
-	QByteArray frame = SYN + STX + stuffing;
+	QByteArray stuffedData = QByteArray(512 - data.size(), 0);
+	stuffedData.prepend(data);
+	QByteArray frame = SYN_BYTE + STX_BYTE + stuffedData;
 	quint16 checksum = qChecksum(data, data.size(), Qt::ChecksumIso3309);
 	frame = frame << checksum;
 	return frame;
