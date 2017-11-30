@@ -4,6 +4,8 @@
 #include <QSerialPort>
 #include <QThread>
 
+#include "ByteArrayOperators.h"
+
 using namespace std;
 
 class IOThread : public QThread
@@ -23,7 +25,7 @@ public:
 
 	QSerialPort* GetPort();
 
-	void Send(const QByteArray data);
+	void Send(const QByteArray& data);
 
 protected:
 	void run();
@@ -31,6 +33,8 @@ protected:
 private:
 	bool mRunning;
 	QSerialPort* mPort;
+
+	QByteArray makeFrame(const QByteArray& data);
 
 public slots:
 	void SendACK();

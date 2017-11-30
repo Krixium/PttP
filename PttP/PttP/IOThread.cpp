@@ -1,7 +1,6 @@
 #include "IOThread.h"
 #include <QDebug>
 
-
 const QByteArray IOThread::SYN = QByteArray(1, 0x16);
 const QByteArray IOThread::STX = QByteArray(1, 0x02);
 const QByteArray IOThread::ACK_FRAME = SYN + QByteArray(1, 0x06);
@@ -23,13 +22,30 @@ IOThread::IOThread(QObject *parent)
 	connect(mPort, &QSerialPort::readyRead, this, &IOThread::GetDataFromPort);
 }
 
-IOThread::~IOThread() 
+IOThread::~IOThread()
 {
 	mRunning = false;
 	mPort->close();
 }
 
-
+/*-------------------------------------------------------------------------------------------------
+-- FUNCTION: GetPort()
+--
+-- DATE: November 29, 2017
+--
+-- REVISIONS: N/A
+--
+-- DESIGNER: Benny Wang
+--
+-- PROGRAMMER: Benny Wang
+--
+-- INTERFACE: QSerialPort* GetPort (void)
+--
+-- RETURNS: A pointer to the QSerialPort.
+--
+-- NOTES:
+-- Getter function for the pointer to the programs QSerialPort.
+-------------------------------------------------------------------------------------------------*/
 QSerialPort* IOThread::GetPort()
 {
 	return mPort;
@@ -44,7 +60,7 @@ QSerialPort* IOThread::GetPort()
 --
 -- DESIGNER: Benny Wang
 --
--- PROGRAMMER: Benny Wang 
+-- PROGRAMMER: Benny Wang
 --
 -- INTERFACE: void GetDataFromPort (void)
 --
@@ -87,7 +103,7 @@ void IOThread::GetDataFromPort()
 --
 -- DESIGNER: Benny Wang
 --
--- PROGRAMMER: Benny Wang 
+-- PROGRAMMER: Benny Wang
 --
 -- INTERFACE: void run (void)
 --
@@ -98,14 +114,14 @@ void IOThread::GetDataFromPort()
 -------------------------------------------------------------------------------------------------*/
 void IOThread::run()
 {
-	while (mRunning) 
+	while (mRunning)
 	{
-		
+
 	}
 }
 
 /*-------------------------------------------------------------------------------------------------
--- FUNCTION: run()
+-- FUNCTION: Send()
 --
 -- DATE: November 29, 2017
 --
@@ -113,19 +129,20 @@ void IOThread::run()
 --
 -- DESIGNER: Benny Wang
 --
--- PROGRAMMER: Benny Wang 
+-- PROGRAMMER: Benny Wang
 --
--- INTERFACE: void run (void)
+-- INTERFACE: void Send (const QByteArray& data)
+--		const QByteArray& data: The data to send through the serial port.
 --
 -- RETURNS: void.
 --
 -- NOTES:
--- The entry point for QThread.
+-- Processes data as nessecary in a non-destructive fashion and sends it over the serial port.
 -------------------------------------------------------------------------------------------------*/
-void IOThread::Send(const QByteArray data)
+void IOThread::Send(const QByteArray& data)
 {
 	qDebug() << "Sending data";
-	mPort->write(data);
+	mPort->write(makeFrame(data));
 }
 
 /*-------------------------------------------------------------------------------------------------
@@ -137,7 +154,7 @@ void IOThread::Send(const QByteArray data)
 --
 -- DESIGNER: Benny Wang
 --
--- PROGRAMMER: Benny Wang 
+-- PROGRAMMER: Benny Wang
 --
 -- INTERFACE: void SendACK (void)
 --
@@ -161,7 +178,7 @@ void IOThread::SendACK()
 --
 -- DESIGNER: Benny Wang
 --
--- PROGRAMMER: Benny Wang 
+-- PROGRAMMER: Benny Wang
 --
 -- INTERFACE: void SendENQ (void)
 --
@@ -175,3 +192,33 @@ void IOThread::SendENQ()
 	qDebug() << "Sending ENQ";
 	mPort->write(ENQ_FRAME);
 }
+
+/*-------------------------------------------------------------------------------------------------
+-- FUNCTION: makeFrame()
+--
+-- DATE: November 29, 2017
+--
+-- REVISIONS: N/A
+--
+-- DESIGNER: Benny Wang
+--
+-- PROGRAMMER: Benny Wang
+--
+-- INTERFACE: QByteArray makeFrame (const QByteArray& data)
+--		const QByteArray& data: The data to frame.
+--
+-- RETURNS: The data wrapped in a frame. 
+--
+-- NOTES:
+-- Wraps the given data in a frame specified by the Power to the Protocoleriat protocol.
+-------------------------------------------------------------------------------------------------*/
+QByteArray IOThread::makeFrame(const QByteArray& data)
+{
+	QByteArray stuffing = QByteArray(512 - data.size(), 0);
+	stuffing.prepend(data);
+	QByteArray frame = SYN + STX + stuffing;
+	quint16 checksum = qChecksum(data, data.size());
+	frame = frame << checksum;
+	return frame;
+}
+
