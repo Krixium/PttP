@@ -50,5 +50,5 @@ public slots:
 
 signals:
 	void LineReadyToSend();
-	void DataFrameRecieved(QByteArray frame);
+	void DataReceieved(string data);
 };

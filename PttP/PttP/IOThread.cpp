@@ -100,22 +100,33 @@ void IOThread::SetPort()
 -------------------------------------------------------------------------------------------------*/
 void IOThread::GetDataFromPort()
 {
-	QByteArray buffer = mPort->readAll();
-	qDebug() << "Buffer = " << buffer;
+	QByteArray frame = mPort->readAll();
+	qDebug() << "frame receieved = " << frame;
 
-	if (buffer == ENQ_FRAME)
+	if (frame == ENQ_FRAME)
 	{
-		qDebug() << "buffer was ENQ";
+		qDebug() << "frame was ENQ";
 		SendACK();
-	}
-
-	if (buffer == ACK_FRAME)
+	} 
+	else if (frame == ACK_FRAME)
 	{
-		qDebug() << "buffer was ACK";
+		qDebug() << "frame was ACK";
 		emit LineReadyToSend();
 	}
+	else 
+	{
+		qDebug() << "frame was data";
 
-	emit DataFrameRecieved(buffer);
+		if (isDataFrameValid(frame))
+		{
+			qDebug() << "no errors detected in data frame";
+			emit DataReceieved(getDataFromFrame(frame));
+		}
+		else
+		{
+			qDebug() << "errors detected in data frame";
+		}
+	}
 }
 
 
