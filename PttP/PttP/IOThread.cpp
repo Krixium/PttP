@@ -18,7 +18,6 @@ IOThread::IOThread(QObject *parent)
 	mPort->setParity(QSerialPort::NoParity);
 	mPort->setStopBits(QSerialPort::OneStop);
 	mPort->setFlowControl(QSerialPort::NoFlowControl);
-	mPort->open(QSerialPort::ReadWrite);
 
 	connect(mPort, &QSerialPort::readyRead, this, &IOThread::GetDataFromPort);
 
@@ -80,7 +79,9 @@ QSerialPort* IOThread::GetPort()
 -------------------------------------------------------------------------------------------------*/
 void IOThread::SetPort()
 {
+	mPort->close();
 	mPort->setPortName(((QAction*)QObject::sender())->text());
+	mPort->open(QSerialPort::ReadWrite);
 }
 
 /*-------------------------------------------------------------------------------------------------
@@ -128,6 +129,7 @@ void IOThread::GetDataFromPort()
 		{
 			qDebug() << "no errors detected in data frame";
 			emit DataReceieved(getDataFromFrame(frame));
+			SendACK();
 		}
 		else
 		{
