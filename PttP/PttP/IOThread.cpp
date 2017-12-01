@@ -111,12 +111,12 @@ void IOThread::GetDataFromPort()
 	QByteArray frame = mPort->readAll();
 	qDebug() << "frame receieved = " << frame;
 
-	if (frame == ENQ_FRAME)
+	if (*frame.data() == *ENQ_FRAME.data())
 	{
 		qDebug() << "frame was ENQ";
 		SendACK();
 	} 
-	else if (frame == ACK_FRAME)
+	else if (*frame.data() == *ACK_FRAME.data())
 	{
 		qDebug() << "frame was ACK";
 		emit LineReadyToSend();
