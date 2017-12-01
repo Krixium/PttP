@@ -26,6 +26,9 @@ PttP::PttP(QWidget *parent)
 	// Send data when line is ready
 	connect(mIOThread, &IOThread::LineReadyToSend, this, &PttP::SendBytesOverPort);
 
+	// Display data from valid data frame
+	connect(mIOThread, &IOThread::DataReceieved, this, &PttP::DisplayDataFromPort);
+
 	mIOThread->start();
 }
 
@@ -117,4 +120,31 @@ void PttP::SendBytesOverPort()
 {
 	qDebug() << "Sending bytes to the port";
 	mIOThread->Send(mFile->GetNextBytes());
+}
+
+/*-------------------------------------------------------------------------------------------------
+-- FUNCTION: DisplayDataFromPort()
+--
+-- DATE: November 30, 2017
+--
+-- REVISIONS: N/A
+--
+-- DESIGNER: Benny Wang
+--
+-- PROGRAMMER: Benny Wang 
+--
+-- INTERFACE: void DisplayDataFromPort (string data)
+--		string data: The data that was unpacked from a valid data frame.
+--
+-- RETURNS: void.
+--
+-- NOTES:
+-- This is a Qt Slot.
+-- When a valid data frame is received and the data is extracted, the function extracting the data
+-- will emit a signal containing the std::string representation of that data and this function will
+-- take that data and display it.
+-------------------------------------------------------------------------------------------------*/
+void PttP::DisplayDataFromPort(string data)
+{
+	ui.plainTextEdit->appendPlainText(QString::fromStdString(data));
 }
