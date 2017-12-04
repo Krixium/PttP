@@ -43,7 +43,7 @@ private:
 	bool isDataFrameValid(const QByteArray& frame);
 	string getDataFromFrame(const QByteArray& frame);
 	
-	void checkBuffer();
+	void handleBuffer();
 
 public slots:
 	void SendACK();

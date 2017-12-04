@@ -22,13 +22,6 @@ IOThread::IOThread(QObject *parent)
 	connect(mPort, &QSerialPort::readyRead, this, &IOThread::GetDataFromPort);
 
 	mBuffer = QByteArray();
-
-	/*
-	QByteArray input = QByteArray("123456789");
-	QByteArray frame = makeFrame(input);
-	bool isFrameValid = isDataFrameValid(frame);
-	string data = getDataFromFrame(frame);
-	*/
 }
 
 IOThread::~IOThread()
