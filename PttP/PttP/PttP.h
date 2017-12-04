@@ -28,6 +28,5 @@ private:
 public slots:
 	void SetFileName(const string newFileName);
 
-	void SendBytesOverPort();
 	void DisplayDataFromPort(string data);
 };

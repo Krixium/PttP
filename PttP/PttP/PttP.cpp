@@ -22,9 +22,6 @@ PttP::PttP(QWidget *parent)
 	// Start button to send ENQ
 	connect(ui.pushButtonStart, &QPushButton::pressed, mIOThread, &IOThread::SendENQ);
 
-	// Send data when line is ready
-	connect(mIOThread, &IOThread::LineReadyToSend, this, &PttP::SendBytesOverPort);
-
 	// Display data from valid data frame
 	connect(mIOThread, &IOThread::DataReceieved, this, &PttP::DisplayDataFromPort);
 
@@ -94,30 +91,6 @@ void PttP::populatePortMenu()
 void PttP::SetFileName(const string newFileName)
 {
 	ui.labelSelectedFile->setText(QString(newFileName.c_str()));
-}
-
-/*-------------------------------------------------------------------------------------------------
--- FUNCTION: SendBytesOverPort()
---
--- DATE: November 29, 2017
---
--- REVISIONS: N/A
---
--- DESIGNER: Benny Wang
---
--- PROGRAMMER: Benny Wang 
---
--- INTERFACE: void SendBytesOverPort ()
---
--- RETURNS: void.
---
--- NOTES:
--- Queries the FileManip object for the enxt 512 bytes in the selected file and sends it to the
--- serial port to be transmitted.
--------------------------------------------------------------------------------------------------*/
-void PttP::SendBytesOverPort()
-{
-	mIOThread->Send();
 }
 
 /*-------------------------------------------------------------------------------------------------

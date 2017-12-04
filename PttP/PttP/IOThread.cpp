@@ -121,7 +121,7 @@ void IOThread::handleBuffer()
 		if (mTxFrameCount < 10)
 		{
 			qDebug() << "ACK received";
-			emit LineReadyToSend();
+			sendBytes();
 			mBuffer.clear();
 			mTxFrameCount++;
 		}
@@ -151,7 +151,6 @@ void IOThread::handleBuffer()
 		}
 	}
 }
-
 
 /*-------------------------------------------------------------------------------------------------
 -- FUNCTION: run()
@@ -197,7 +196,7 @@ void IOThread::run()
 -- NOTES:
 -- Processes data as nessecary in a non-destructive fashion and sends it over the serial port.
 -------------------------------------------------------------------------------------------------*/
-void IOThread::Send()
+void IOThread::sendBytes()
 {
 	qDebug() << "Sending data";
 	QByteArray data = mFile->GetNextBytes();

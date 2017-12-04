@@ -82,7 +82,6 @@ public:
 		return mFile;
 	}
 
-	void Send();
 
 protected:
 	void run();
@@ -96,6 +95,7 @@ private:
 	QByteArray mBuffer;
 	int mTxFrameCount;
 
+	void sendBytes();
 	QByteArray makeFrame(const QByteArray& data);
 
 	bool isDataFrameValid(const QByteArray& frame);
@@ -111,6 +111,5 @@ public slots:
 	void SetPort();
 
 signals:
-	void LineReadyToSend();
 	void DataReceieved(string data);
 };
