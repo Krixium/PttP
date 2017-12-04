@@ -7,6 +7,7 @@
 #include <QByteArray>
 #include <QObject>
 #include <QSerialPort>
+#include <QString>
 #include <QThread>
 
 #include "CRC.h"
@@ -91,6 +92,10 @@ protected:
 
 private:
 	bool mRunning;
+	bool mACKReceived;
+	bool mENQReceived;
+	bool mEOTReceived;
+	bool mDataReceived;
 
 	FileManip* mFile;
 	QSerialPort* mPort;
@@ -99,18 +104,24 @@ private:
 	int mTxFrameCount;
 
 	void sendBytes();
+	void sendBurstOfFrames();
 	QByteArray makeFrame(const QByteArray& data);
 
 	bool isDataFrameValid(const QByteArray& frame);
-	string getDataFromFrame(const QByteArray& frame);
+	QString getDataFromFrame(const QByteArray& frame);
 	
 	void handleBuffer();
+	void handleENQ();
+	void handleEOT();
+	void handleIncomingDataFrame();
 
 public slots:
 	void SendFile();
 	void GetDataFromPort();
 	void SetPort();
+	void writeToPort(const QByteArray& frame);
 
 signals:
-	void DataReceieved(string data);
+	void DataReceieved(const QString data);
+	void writeToPortSignal(const QByteArray& frame);
 };

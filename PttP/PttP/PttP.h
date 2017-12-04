@@ -28,5 +28,5 @@ private:
 public slots:
 	void SetFileName(const string newFileName);
 
-	void DisplayDataFromPort(string data);
+	void DisplayDataFromPort(const QString data);
 };

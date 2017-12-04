@@ -13,14 +13,14 @@ PttP::PttP(QWidget *parent)
 	populatePortMenu();
 
 	// Menu option exit
-	connect(ui.actionExit, &QAction::triggered, this, &QWidget::close);
+	connect(ui.actionExit, &QAction::triggered, this, &QWidget::close, Qt::QueuedConnection);
 
 	// Selecting a file
 	connect(ui.pushButtonSelect, &QPushButton::pressed, mIOThread->GetFileManip(), &FileManip::SelectFile);
 	connect(mIOThread->GetFileManip(), &FileManip::fileChanged, this, &PttP::SetFileName);
 
 	// Start button to send ENQ
-	connect(ui.pushButtonStart, &QPushButton::pressed, mIOThread, &IOThread::SendFile);
+	connect(ui.pushButtonStart, &QPushButton::pressed, mIOThread, &IOThread::SendFile, Qt::QueuedConnection);
 
 	// Display data from valid data frame
 	connect(mIOThread, &IOThread::DataReceieved, this, &PttP::DisplayDataFromPort);
@@ -115,7 +115,7 @@ void PttP::SetFileName(const string newFileName)
 -- will emit a signal containing the std::string representation of that data and this function will
 -- take that data and display it.
 -------------------------------------------------------------------------------------------------*/
-void PttP::DisplayDataFromPort(string data)
+void PttP::DisplayDataFromPort(const QString data)
 {
-	ui.plainTextEdit->appendPlainText(QString::fromStdString(data));
+	ui.plainTextEdit->appendPlainText(data);
 }

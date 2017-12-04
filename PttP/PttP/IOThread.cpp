@@ -11,6 +11,10 @@ const QByteArray IOThread::EOT_FRAME = SYN_BYTE + QByteArray(1, EOT);
 IOThread::IOThread(QObject *parent)
 	: QThread(parent)
 	, mRunning(true)
+	, mACKReceived(false)
+	, mENQReceived(false)
+	, mEOTReceived(false)
+	, mDataReceived(false)
 	, mPort(new QSerialPort(this))
 	, mFile(new FileManip(this))
 	, mTxFrameCount(0)
@@ -21,7 +25,8 @@ IOThread::IOThread(QObject *parent)
 	mPort->setStopBits(QSerialPort::OneStop);
 	mPort->setFlowControl(QSerialPort::NoFlowControl);
 
-	connect(mPort, &QSerialPort::readyRead, this, &IOThread::GetDataFromPort);
+	connect(mPort, &QSerialPort::readyRead, this, &IOThread::GetDataFromPort, Qt::QueuedConnection);
+	connect(this, &IOThread::writeToPortSignal, this, &IOThread::writeToPort, Qt::QueuedConnection);
 
 	mBuffer = QByteArray();
 }
@@ -30,6 +35,12 @@ IOThread::~IOThread()
 {
 	mRunning = false;
 	mPort->close();
+}
+
+void IOThread::writeToPort(const QByteArray& frame)
+{
+	mPort->write(frame);
+	mPort->flush();
 }
 
 /*-------------------------------------------------------------------------------------------------
@@ -108,47 +119,48 @@ void IOThread::GetDataFromPort()
 -------------------------------------------------------------------------------------------------*/
 void IOThread::handleBuffer()
 {
-	qDebug() << "Buffer:" << mBuffer;
 	if (mBuffer.contains(ENQ_FRAME))
 	{
-		qDebug() << "ENQ received";
-		SendACK();
-		mBuffer.clear();
+		mENQReceived = true;
 	}
 
 	if (mBuffer.contains(ACK_FRAME))
 	{
-		if (mTxFrameCount < 10)
-		{
-			qDebug() << "ACK received";
-			sendBytes();
-			mBuffer.clear();
-			mTxFrameCount++;
-		}
-		else
-		{
-			SendEOT();
-			mTxFrameCount = 0;
-		}
+		mACKReceived = true;
 	}
 
 	if (mBuffer.contains(EOT_FRAME))
 	{
-		qDebug() << "EOT received.";
+		mEOTReceived = true;
 	}
 
 	if (mBuffer.contains(SYN_BYTE + STX_BYTE))
 	{
-		int dataFrameStart = mBuffer.indexOf(SYN_BYTE);
-		QByteArray dataFrame = mBuffer.mid(dataFrameStart, DATA_FRAME_SIZE);
+		mDataReceived = true;
+	}
+}
 
-		if (isDataFrameValid(dataFrame))
-		{
-			qDebug() << "Data frame is good";
-			emit DataReceieved(getDataFromFrame(dataFrame));
-			SendACK();
-			mBuffer.clear();
-		}
+void IOThread::handleENQ()
+{
+	SendACK();
+	mBuffer.clear();
+}
+
+void IOThread::handleEOT()
+{
+	mBuffer.clear();
+}
+
+void IOThread::handleIncomingDataFrame()
+{
+	int dataFrameStart = mBuffer.indexOf(SYN_BYTE);
+	QByteArray dataFrame = mBuffer.mid(dataFrameStart, DATA_FRAME_SIZE);
+
+	if (isDataFrameValid(dataFrame))
+	{
+		emit DataReceieved(getDataFromFrame(dataFrame));
+		SendACK();
+		mBuffer.clear();
 	}
 }
 
@@ -174,7 +186,31 @@ void IOThread::run()
 {
 	while (mRunning)
 	{
+		if (mACKReceived)
+		{
+			sendBurstOfFrames();
+			mDataReceived = false;
+		}
 
+		if (mENQReceived)
+		{
+			handleENQ();
+			mENQReceived = false;
+		}
+
+		if (mEOTReceived)
+		{
+			handleEOT();
+			mEOTReceived = false;
+		}
+
+		if (mDataReceived)
+		{
+			handleIncomingDataFrame();
+			mDataReceived = false;
+		}
+
+		msleep(1000);
 	}
 }
 
@@ -198,10 +234,24 @@ void IOThread::run()
 -------------------------------------------------------------------------------------------------*/
 void IOThread::sendBytes()
 {
-	qDebug() << "Sending data";
 	QByteArray data = mFile->GetNextBytes();
 	QByteArray frame = makeFrame(data);
-	mPort->write(frame);
+	emit writeToPort(frame);
+}
+
+void IOThread::sendBurstOfFrames()
+{
+	if (mTxFrameCount < 10)
+	{
+		sendBytes();
+		mBuffer.clear();
+		mTxFrameCount++;
+	}
+	else
+	{
+		SendEOT();
+		mTxFrameCount = 0;
+	}
 }
 
 void IOThread::SendFile()
@@ -229,8 +279,7 @@ void IOThread::SendFile()
 -------------------------------------------------------------------------------------------------*/
 void IOThread::SendACK()
 {
-	qDebug() << "Sending ACK";
-	mPort->write(ACK_FRAME);
+	emit writeToPort(ACK_FRAME);
 }
 
 /*-------------------------------------------------------------------------------------------------
@@ -253,8 +302,7 @@ void IOThread::SendACK()
 -------------------------------------------------------------------------------------------------*/
 void IOThread::SendENQ()
 {
-	qDebug() << "Sending ENQ";
-	mPort->write(ENQ_FRAME);
+	emit writeToPort(ENQ_FRAME);
 }
 
 /*-------------------------------------------------------------------------------------------------
@@ -277,8 +325,7 @@ void IOThread::SendENQ()
 -------------------------------------------------------------------------------------------------*/
 void IOThread::SendEOT()
 {
-	qDebug() << "Sending EOT";
-	mPort->write(EOT_FRAME);
+	emit writeToPort(EOT_FRAME);
 }
 
 /*-------------------------------------------------------------------------------------------------
@@ -361,7 +408,7 @@ bool IOThread::isDataFrameValid(const QByteArray& frame)
 --
 -- PROGRAMMER: Benny Wang
 --
--- INTERFACE: string getDataFromFrame (const QByteArray& frame)
+-- INTERFACE: QString getDataFromFrame (const QByteArray& frame)
 --		const QByteArray& frame: The frame recieved from the serial port.
 --
 -- RETURNS: The data contained in the frame.
@@ -369,8 +416,8 @@ bool IOThread::isDataFrameValid(const QByteArray& frame)
 -- NOTES:
 -- Unwraps the data from the frame and returns it as a stirng.
 -------------------------------------------------------------------------------------------------*/
-string IOThread::getDataFromFrame(const QByteArray& frame)
+QString IOThread::getDataFromFrame(const QByteArray& frame)
 {
-	return frame.mid(DATA_HEADER_SIZE, DATA_LENGTH).toStdString();
+	return frame.mid(DATA_HEADER_SIZE, DATA_LENGTH);
 }
 
