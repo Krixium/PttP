@@ -20,7 +20,7 @@ PttP::PttP(QWidget *parent)
 	connect(mIOThread->GetFileManip(), &FileManip::fileChanged, this, &PttP::SetFileName);
 
 	// Start button to send ENQ
-	connect(ui.pushButtonStart, &QPushButton::pressed, mIOThread, &IOThread::SendENQ);
+	connect(ui.pushButtonStart, &QPushButton::pressed, mIOThread, &IOThread::SendFile);
 
 	// Display data from valid data frame
 	connect(mIOThread, &IOThread::DataReceieved, this, &PttP::DisplayDataFromPort);

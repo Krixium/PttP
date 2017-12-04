@@ -204,6 +204,11 @@ void IOThread::sendBytes()
 	mPort->write(frame);
 }
 
+void IOThread::SendFile()
+{
+	SendENQ();
+}
+
 /*-------------------------------------------------------------------------------------------------
 -- FUNCTION: SendACK()
 --

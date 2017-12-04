@@ -82,6 +82,9 @@ public:
 		return mFile;
 	}
 
+	void SendACK();
+	void SendENQ();
+	void SendEOT();
 
 protected:
 	void run();
@@ -104,9 +107,7 @@ private:
 	void handleBuffer();
 
 public slots:
-	void SendACK();
-	void SendENQ();
-	void SendEOT();
+	void SendFile();
 	void GetDataFromPort();
 	void SetPort();
 
