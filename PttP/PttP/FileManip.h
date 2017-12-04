@@ -20,6 +20,7 @@ public:
 
 	QByteArray GetNextBytes();
 	QByteArray GetPreviousBytes();
+	bool IsAtEndOfFile();
 
 private:
 	string mFile;

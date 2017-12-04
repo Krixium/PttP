@@ -101,3 +101,8 @@ QByteArray FileManip::GetPreviousBytes()
 {
 	return QByteArray(mBuffer);
 }
+
+bool FileManip::IsAtEndOfFile()
+{
+	return mInStream->eof();
+}
