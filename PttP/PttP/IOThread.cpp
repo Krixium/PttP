@@ -11,6 +11,8 @@ const QByteArray IOThread::EOT_FRAME = SYN_BYTE + QByteArray(1, EOT);
 IOThread::IOThread(QObject *parent)
 	: QThread(parent)
 	, mRunning(true)
+	, mRequestingToSend(false)
+	, mClearToSend(false)
 	, mACKReceived(false)
 	, mENQReceived(false)
 	, mEOTReceived(false)
@@ -35,6 +37,7 @@ IOThread::~IOThread()
 {
 	mRunning = false;
 	mPort->close();
+	// Exception thrown here
 }
 
 void IOThread::writeToPort(const QByteArray& frame)
@@ -186,10 +189,17 @@ void IOThread::run()
 {
 	while (mRunning)
 	{
+		if (mRequestingToSend)
+		{
+			SendENQ();
+			mRequestingToSend = false;
+		}
+
+		// Receiving
 		if (mACKReceived)
 		{
-			sendBurstOfFrames();
-			mDataReceived = false;
+			sendFrame();
+			mACKReceived = false;
 		}
 
 		if (mENQReceived)
@@ -214,41 +224,23 @@ void IOThread::run()
 	}
 }
 
-/*-------------------------------------------------------------------------------------------------
--- FUNCTION: Send()
---
--- DATE: November 29, 2017
---
--- REVISIONS: N/A
---
--- DESIGNER: Benny Wang
---
--- PROGRAMMER: Benny Wang
---
--- INTERFACE: void Send ()
---
--- RETURNS: void.
---
--- NOTES:
--- Processes data as nessecary in a non-destructive fashion and sends it over the serial port.
--------------------------------------------------------------------------------------------------*/
-void IOThread::sendBytes()
-{
-	QByteArray data = mFile->GetNextBytes();
-	QByteArray frame = makeFrame(data);
-	emit writeToPort(frame);
-}
-
-void IOThread::sendBurstOfFrames()
+void IOThread::sendFrame()
 {
 	if (mTxFrameCount < 10)
 	{
-		sendBytes();
+		QByteArray data = mFile->GetNextBytes();
+		QByteArray frame = makeFrame(data);
+		emit writeToPort(frame);
 		mBuffer.clear();
 		mTxFrameCount++;
 	}
 	else
 	{
+		if (!mFile->IsAtEndOfFile())
+		{
+			mRequestingToSend = true;
+		}
+
 		SendEOT();
 		mTxFrameCount = 0;
 	}
@@ -256,7 +248,7 @@ void IOThread::sendBurstOfFrames()
 
 void IOThread::SendFile()
 {
-	SendENQ();
+	mRequestingToSend = true;
 }
 
 /*-------------------------------------------------------------------------------------------------

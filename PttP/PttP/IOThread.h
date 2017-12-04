@@ -92,6 +92,10 @@ protected:
 
 private:
 	bool mRunning;
+
+	bool mRequestingToSend;
+	bool mClearToSend;
+
 	bool mACKReceived;
 	bool mENQReceived;
 	bool mEOTReceived;
@@ -103,8 +107,7 @@ private:
 	QByteArray mBuffer;
 	int mTxFrameCount;
 
-	void sendBytes();
-	void sendBurstOfFrames();
+	void sendFrame();
 	QByteArray makeFrame(const QByteArray& data);
 
 	bool isDataFrameValid(const QByteArray& frame);
