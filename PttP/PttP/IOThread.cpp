@@ -21,6 +21,8 @@ IOThread::IOThread(QObject *parent)
 
 	connect(mPort, &QSerialPort::readyRead, this, &IOThread::GetDataFromPort);
 
+	mBuffer = QByteArray();
+
 	/*
 	QByteArray input = QByteArray("123456789");
 	QByteArray frame = makeFrame(input);
@@ -103,43 +105,70 @@ void IOThread::SetPort()
 --
 -- A Qt Slot.
 --
--- This slot is triggered whenever the serial port has something to read. Logic is handled by
--- the protocol design.
+-- When there is data to read in the ports it is read into a buffer and a checkBuffer() is called
+-- to handle it.
 -------------------------------------------------------------------------------------------------*/
 void IOThread::GetDataFromPort()
 {
-	qDebug() << "------------------------------------------------------------------------------------------";
-	msleep(500);
-	QByteArray frame = mPort->readAll();
-	qDebug() << "Frame received";
-	qDebug() << "size = [" << frame.size() << "], data = [" << frame << "]";
+	mBuffer += mPort->readAll();
+	handleBuffer();
+}
 
-	if (frame == ENQ_FRAME)
+/*-------------------------------------------------------------------------------------------------
+-- FUNCTION: handleBuffer()
+--
+-- DATE: December 4, 2017
+--
+-- REVISIONS: N/A
+--
+-- DESIGNER: Benny Wang
+--
+-- PROGRAMMER: Benny Wang
+--
+-- INTERFACE: void handleBuffer (void)
+--
+-- RETURNS: void.
+--
+-- NOTES:
+--
+-- When new data is read in from the buffer, this function will check the buffer to see if it
+-- contains a valid frame and then handles it accordingly.
+-------------------------------------------------------------------------------------------------*/
+void IOThread::handleBuffer()
+{
+	qDebug() << mBuffer;
+
+	if (mBuffer.contains(ENQ_FRAME))
 	{
-		qDebug() << "Frame was an ENQ frame";
+		qDebug() << "ENQ received";
 		SendACK();
-	} 
-	else if (frame == ACK_FRAME)
-	{
-		qDebug() << "Frame was an ACK frame";
-		emit LineReadyToSend();
+		mBuffer.clear();
 	}
-	else 
-	{
-		qDebug() << "Frame was a data frame.";
 
-		if (isDataFrameValid(frame))
+	if (mBuffer.contains(ACK_FRAME))
+	{
+		qDebug() << "ACK received";
+		emit LineReadyToSend();
+		mBuffer.clear();
+	}
+
+	// This might have to be more robust later down the line
+	if (mBuffer.contains(SYN_BYTE + STX_BYTE))
+	{
+		int dataFrameStart = mBuffer.indexOf(SYN_BYTE);
+		QByteArray dataFrame = mBuffer.mid(dataFrameStart, 516);
+		if (isDataFrameValid(dataFrame))
 		{
-			qDebug() << "Data frame is good.";
-			emit DataReceieved(getDataFromFrame(frame));
+			qDebug() << "Data frame is good";
+			emit DataReceieved(getDataFromFrame(dataFrame));
 			SendACK();
+			mBuffer.clear();
 		}
 		else
 		{
-			qDebug() << "Error Detected in data frame";
+			qDebug() << "Error detected in data frame";
 		}
 	}
-	qDebug() << "------------------------------------------------------------------------------------------";
 }
 
 
@@ -300,6 +329,7 @@ QByteArray IOThread::makeFrame(const QByteArray& data)
 -------------------------------------------------------------------------------------------------*/
 bool IOThread::isDataFrameValid(const QByteArray& frame)
 {
+	if (frame.size() != 516) return false;
 	QByteArray data = frame.mid(2, 512);
 	QByteArray crc = frame.mid(514);
 	QByteArray checksum = QByteArray();  

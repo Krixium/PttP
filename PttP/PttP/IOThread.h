@@ -36,11 +36,14 @@ protected:
 private:
 	bool mRunning;
 	QSerialPort* mPort;
+	QByteArray mBuffer;
 
 	QByteArray makeFrame(const QByteArray& data);
 
 	bool isDataFrameValid(const QByteArray& frame);
 	string getDataFromFrame(const QByteArray& frame);
+	
+	void checkBuffer();
 
 public slots:
 	void SendACK();
