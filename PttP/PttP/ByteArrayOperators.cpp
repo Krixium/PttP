@@ -23,7 +23,7 @@
 -- This function was created by Matteo Italia on Stack Overflow.
 -- https://stackoverflow.com/users/214671/matteo-italia
 -------------------------------------------------------------------------------------------------*/
-QByteArray &operator<<(QByteArray& l, quint8 r)
+QByteArray &operator<<(QByteArray& l, uint8_t r)
 {
 	l.append(r);
 	return l;
@@ -52,7 +52,7 @@ QByteArray &operator<<(QByteArray& l, quint8 r)
 -- This function was created by Matteo Italia on Stack Overflow.
 -- https://stackoverflow.com/users/214671/matteo-italia
 -------------------------------------------------------------------------------------------------*/
-QByteArray &operator<<(QByteArray& l, quint16 r)
+QByteArray &operator<<(QByteArray& l, uint16_t r)
 {
 	return l << quint8(r >> 8) << quint8(r);
 }
@@ -80,7 +80,7 @@ QByteArray &operator<<(QByteArray& l, quint16 r)
 -- This function was created by Matteo Italia on Stack Overflow.
 -- https://stackoverflow.com/users/214671/matteo-italia
 -------------------------------------------------------------------------------------------------*/
-QByteArray &operator<<(QByteArray& l, quint32 r)
+QByteArray &operator<<(QByteArray& l, uint32_t r)
 {
 	return l << quint16(r >> 16) << quint16(r);
 }

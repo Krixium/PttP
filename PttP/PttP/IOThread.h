@@ -1,13 +1,23 @@
 #pragma once
 
+#include <iomanip>
+#include <cstdint>
+
 #include <QAction>
 #include <QByteArray>
 #include <QObject>
 #include <QSerialPort>
 #include <QThread>
 
+#include "CRC.h"
+
 #include "ByteArrayOperators.h"
 #include "ControlCharacters.h"
+#include "FileManip.h"
+
+#define DATA_FRAME_SIZE	518
+#define DATA_HEADER_SIZE 2
+#define DATA_LENGTH	512
 
 using namespace std;
 
@@ -26,17 +36,65 @@ public:
 	IOThread(QObject *parent);
 	~IOThread();
 
-	QSerialPort* GetPort();
+	/*-------------------------------------------------------------------------------------------------
+	-- FUNCTION: GetPort()
+	--
+	-- DATE: November 29, 2017
+	--
+	-- REVISIONS: N/A
+	--
+	-- DESIGNER: Benny Wang
+	--
+	-- PROGRAMMER: Benny Wang
+	--
+	-- INTERFACE: QSerialPort* GetPort (void)
+	--
+	-- RETURNS: A pointer to the QSerialPort.
+	--
+	-- NOTES:
+	-- Getter function for the pointer to the programs QSerialPort.
+	-------------------------------------------------------------------------------------------------*/
+	inline QSerialPort* GetPort()
+	{
+		return mPort;
+	}
 
-	void Send(const QByteArray& data);
+	/*-------------------------------------------------------------------------------------------------
+	-- FUNCTION: GetFileManip()
+	--
+	-- DATE: November 29, 2017
+	--
+	-- REVISIONS: N/A
+	--
+	-- DESIGNER: Benny Wang
+	--
+	-- PROGRAMMER: Benny Wang
+	--
+	-- INTERFACE: FileManip* GetFileManip (void)
+	--
+	-- RETURNS: A pointer to the File Manipulator.
+	--
+	-- NOTES:
+	-- Getter function for the pointer to the programs File manipulator.
+	-------------------------------------------------------------------------------------------------*/
+	inline FileManip* GetFileManip()
+	{
+		return mFile;
+	}
+
+	void Send();
 
 protected:
 	void run();
 
 private:
 	bool mRunning;
+
+	FileManip* mFile;
 	QSerialPort* mPort;
+
 	QByteArray mBuffer;
+	int mTxFrameCount;
 
 	QByteArray makeFrame(const QByteArray& data);
 
@@ -48,6 +106,7 @@ private:
 public slots:
 	void SendACK();
 	void SendENQ();
+	void SendEOT();
 	void GetDataFromPort();
 	void SetPort();
 

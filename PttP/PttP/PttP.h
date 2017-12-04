@@ -21,7 +21,6 @@ public:
 private:
 	Ui::PttPClass ui;
 
-	FileManip* mFile;
 	IOThread* mIOThread;
 
 	void populatePortMenu();

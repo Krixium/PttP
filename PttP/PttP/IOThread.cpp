@@ -11,7 +11,9 @@ const QByteArray IOThread::EOT_FRAME = SYN_BYTE + QByteArray(1, EOT);
 IOThread::IOThread(QObject *parent)
 	: QThread(parent)
 	, mRunning(true)
-	, mPort(new QSerialPort("COM1", this))
+	, mPort(new QSerialPort(this))
+	, mFile(new FileManip(this))
+	, mTxFrameCount(0)
 {
 	mPort->setBaudRate(QSerialPort::Baud9600);
 	mPort->setDataBits(QSerialPort::Data8);
@@ -28,29 +30,6 @@ IOThread::~IOThread()
 {
 	mRunning = false;
 	mPort->close();
-}
-
-/*-------------------------------------------------------------------------------------------------
--- FUNCTION: GetPort()
---
--- DATE: November 29, 2017
---
--- REVISIONS: N/A
---
--- DESIGNER: Benny Wang
---
--- PROGRAMMER: Benny Wang
---
--- INTERFACE: QSerialPort* GetPort (void)
---
--- RETURNS: A pointer to the QSerialPort.
---
--- NOTES:
--- Getter function for the pointer to the programs QSerialPort.
--------------------------------------------------------------------------------------------------*/
-QSerialPort* IOThread::GetPort()
-{
-	return mPort;
 }
 
 /*-------------------------------------------------------------------------------------------------
@@ -129,8 +108,7 @@ void IOThread::GetDataFromPort()
 -------------------------------------------------------------------------------------------------*/
 void IOThread::handleBuffer()
 {
-	qDebug() << mBuffer;
-
+	qDebug() << "Buffer:" << mBuffer;
 	if (mBuffer.contains(ENQ_FRAME))
 	{
 		qDebug() << "ENQ received";
@@ -140,26 +118,36 @@ void IOThread::handleBuffer()
 
 	if (mBuffer.contains(ACK_FRAME))
 	{
-		qDebug() << "ACK received";
-		emit LineReadyToSend();
-		mBuffer.clear();
+		if (mTxFrameCount < 10)
+		{
+			qDebug() << "ACK received";
+			emit LineReadyToSend();
+			mBuffer.clear();
+			mTxFrameCount++;
+		}
+		else
+		{
+			SendEOT();
+			mTxFrameCount = 0;
+		}
 	}
 
-	// This might have to be more robust later down the line
+	if (mBuffer.contains(EOT_FRAME))
+	{
+		qDebug() << "EOT received.";
+	}
+
 	if (mBuffer.contains(SYN_BYTE + STX_BYTE))
 	{
 		int dataFrameStart = mBuffer.indexOf(SYN_BYTE);
-		QByteArray dataFrame = mBuffer.mid(dataFrameStart, 516);
+		QByteArray dataFrame = mBuffer.mid(dataFrameStart, DATA_FRAME_SIZE);
+
 		if (isDataFrameValid(dataFrame))
 		{
 			qDebug() << "Data frame is good";
 			emit DataReceieved(getDataFromFrame(dataFrame));
 			SendACK();
 			mBuffer.clear();
-		}
-		else
-		{
-			qDebug() << "Error detected in data frame";
 		}
 	}
 }
@@ -202,18 +190,19 @@ void IOThread::run()
 --
 -- PROGRAMMER: Benny Wang
 --
--- INTERFACE: void Send (const QByteArray& data)
---		const QByteArray& data: The data to send through the serial port.
+-- INTERFACE: void Send ()
 --
 -- RETURNS: void.
 --
 -- NOTES:
 -- Processes data as nessecary in a non-destructive fashion and sends it over the serial port.
 -------------------------------------------------------------------------------------------------*/
-void IOThread::Send(const QByteArray& data)
+void IOThread::Send()
 {
 	qDebug() << "Sending data";
-	mPort->write(makeFrame(data));
+	QByteArray data = mFile->GetNextBytes();
+	QByteArray frame = makeFrame(data);
+	mPort->write(frame);
 }
 
 /*-------------------------------------------------------------------------------------------------
@@ -265,6 +254,30 @@ void IOThread::SendENQ()
 }
 
 /*-------------------------------------------------------------------------------------------------
+-- FUNCTION: SendEOT()
+--
+-- DATE: November 29, 2017
+--
+-- REVISIONS: N/A
+--
+-- DESIGNER: Benny Wang
+--
+-- PROGRAMMER: Benny Wang
+--
+-- INTERFACE: void SendEOT (void)
+--
+-- RETURNS: void.
+--
+-- NOTES:
+-- Sends a single EOT through the serial port.
+-------------------------------------------------------------------------------------------------*/
+void IOThread::SendEOT()
+{
+	qDebug() << "Sending EOT";
+	mPort->write(EOT_FRAME);
+}
+
+/*-------------------------------------------------------------------------------------------------
 -- FUNCTION: makeFrame()
 --
 -- DATE: November 29, 2017
@@ -283,20 +296,16 @@ void IOThread::SendENQ()
 -- NOTES:
 -- Wraps the given data in a frame specified by the Power to the Protocoleriat protocol.
 --
--- The checksum used is Qt::ChecksumIso3309(CRC-16/X-25)
---		Poly:	0x1021
---		Init:	0xFFFF
---		RefIn:	True
---		RefOut:	True
---		XorOut:	0xFFFF
 -------------------------------------------------------------------------------------------------*/
 QByteArray IOThread::makeFrame(const QByteArray& data)
 {
-	QByteArray stuffedData = QByteArray(512 - data.size(), 0x0);
+	QByteArray stuffedData = QByteArray(DATA_LENGTH - data.size(), 0x0);
 	stuffedData.prepend(data);
+	uint32_t crc = CRC::Calculate(stuffedData.data(), DATA_LENGTH, CRC::CRC_32());
+
 	QByteArray frame = SYN_BYTE + STX_BYTE + stuffedData;
-	quint16 checksum = qChecksum(stuffedData, stuffedData.size(), Qt::ChecksumIso3309);
-	frame = frame << checksum;
+	frame = frame << crc;
+
 	return frame;
 }
 
@@ -322,12 +331,19 @@ QByteArray IOThread::makeFrame(const QByteArray& data)
 -------------------------------------------------------------------------------------------------*/
 bool IOThread::isDataFrameValid(const QByteArray& frame)
 {
-	if (frame.size() != 516) return false;
-	QByteArray data = frame.mid(2, 512);
-	QByteArray crc = frame.mid(514);
-	QByteArray checksum = QByteArray();  
-	checksum = checksum << qChecksum(data, data.size(), Qt::ChecksumIso3309);
-	return checksum == crc;
+	// Check size (518 bytes)
+	if (frame.size() != DATA_FRAME_SIZE) return false;
+
+	// Grab data (512 bytes)
+	QByteArray frameData = frame.mid(2, DATA_LENGTH);
+
+	// Grab crc (4 bytes)
+	QByteArray receivedCrc = frame.mid(DATA_HEADER_SIZE + DATA_LENGTH);
+
+	QByteArray recalculatedCrc = QByteArray();
+	recalculatedCrc = recalculatedCrc << CRC::Calculate(frameData.data(), DATA_LENGTH, CRC::CRC_32());
+
+	return recalculatedCrc == receivedCrc;
 }
 
 /*-------------------------------------------------------------------------------------------------
@@ -351,6 +367,6 @@ bool IOThread::isDataFrameValid(const QByteArray& frame)
 -------------------------------------------------------------------------------------------------*/
 string IOThread::getDataFromFrame(const QByteArray& frame)
 {
-	return frame.mid(2, 512).toStdString();
+	return frame.mid(DATA_HEADER_SIZE, DATA_LENGTH).toStdString();
 }
 

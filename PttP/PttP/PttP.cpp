@@ -7,7 +7,6 @@ using namespace std;
 PttP::PttP(QWidget *parent)
 	: QMainWindow(parent)
 	, mIOThread(new IOThread(this))
-	, mFile(new FileManip(this))
 {
 	ui.setupUi(this);
 
@@ -17,8 +16,8 @@ PttP::PttP(QWidget *parent)
 	connect(ui.actionExit, &QAction::triggered, this, &QWidget::close);
 
 	// Selecting a file
-	connect(ui.pushButtonSelect, &QPushButton::pressed, mFile, &FileManip::SelectFile);
-	connect(mFile, &FileManip::fileChanged, this, &PttP::SetFileName);
+	connect(ui.pushButtonSelect, &QPushButton::pressed, mIOThread->GetFileManip(), &FileManip::SelectFile);
+	connect(mIOThread->GetFileManip(), &FileManip::fileChanged, this, &PttP::SetFileName);
 
 	// Start button to send ENQ
 	connect(ui.pushButtonStart, &QPushButton::pressed, mIOThread, &IOThread::SendENQ);
@@ -118,8 +117,7 @@ void PttP::SetFileName(const string newFileName)
 -------------------------------------------------------------------------------------------------*/
 void PttP::SendBytesOverPort()
 {
-	qDebug() << "Sending bytes to the port";
-	mIOThread->Send(mFile->GetNextBytes());
+	mIOThread->Send();
 }
 
 /*-------------------------------------------------------------------------------------------------

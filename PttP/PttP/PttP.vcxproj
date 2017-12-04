@@ -136,6 +136,7 @@
     </CustomBuild>
     <ClInclude Include="ByteArrayOperators.h" />
     <ClInclude Include="ControlCharacters.h" />
+    <ClInclude Include="CRC.h" />
     <ClInclude Include="GeneratedFiles\ui_PttP.h" />
     <CustomBuild Include="IOThread.h">
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
