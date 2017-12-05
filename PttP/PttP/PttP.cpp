@@ -1,7 +1,5 @@
 #include "PttP.h"
 
-#include <QDebug>
-
 using namespace std;
 
 PttP::PttP(QWidget *parent)
@@ -117,5 +115,9 @@ void PttP::SetFileName(const string newFileName)
 -------------------------------------------------------------------------------------------------*/
 void PttP::DisplayDataFromPort(const QString data)
 {
-	ui.plainTextEdit->insertPlainText(data);
+	QPlainTextEdit* textEdit = ui.plainTextEdit;
+	QScrollBar* scrollBar = textEdit->verticalScrollBar();
+
+	textEdit->insertPlainText(data);
+	scrollBar->setValue(scrollBar->maximum());
 }

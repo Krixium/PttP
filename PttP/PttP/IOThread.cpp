@@ -40,12 +40,6 @@ IOThread::~IOThread()
 	}
 }
 
-void IOThread::writeToPort(const QByteArray& frame)
-{
-	mPort->write(frame);
-	mPort->flush();
-}
-
 /*-------------------------------------------------------------------------------------------------
 -- FUNCTION: SetPort()
 --
@@ -70,6 +64,44 @@ void IOThread::SetPort()
 	mPort->close();
 	mPort->setPortName(((QAction*)QObject::sender())->text());
 	mPort->open(QSerialPort::ReadWrite);
+}
+
+void IOThread::writeToPort(const QByteArray& frame)
+{
+	mPort->write(frame);
+	mPort->flush();
+}
+
+void IOThread::sendFrame()
+{
+	if (mFile->IsAtEndOfFile())
+	{
+		SendEOT();
+		mTxFrameCount = 0;
+	}
+	else if (mTxFrameCount < 10)
+	{
+		QByteArray data = mFile->GetNextBytes();
+		QByteArray frame = makeFrame(data);
+		emit writeToPort(frame);
+		mBuffer.clear();
+		mTxFrameCount++;
+	}
+	else
+	{
+		if (!mFile->IsAtEndOfFile())
+		{
+			mFlag |= RTS;
+		}
+
+		SendEOT();
+		mTxFrameCount = 0;
+	}
+}
+
+void IOThread::SendFile()
+{
+	mFlag |= RTS;
 }
 
 /*-------------------------------------------------------------------------------------------------
@@ -234,37 +266,6 @@ void IOThread::run()
 	}
 }
 
-void IOThread::sendFrame()
-{
-	if (mFile->IsAtEndOfFile())
-	{
-		SendEOT();
-		mTxFrameCount = 0;
-	}
-	else if (mTxFrameCount < 10)
-	{
-		QByteArray data = mFile->GetNextBytes();
-		QByteArray frame = makeFrame(data);
-		emit writeToPort(frame);
-		mBuffer.clear();
-		mTxFrameCount++;
-	}
-	else
-	{
-		if (!mFile->IsAtEndOfFile())
-		{
-			mFlag |= RTS;
-		}
-
-		SendEOT();
-		mTxFrameCount = 0;
-	}
-}
-
-void IOThread::SendFile()
-{
-	mFlag |= RTS;
-}
 
 /*-------------------------------------------------------------------------------------------------
 -- FUNCTION: SendACK()

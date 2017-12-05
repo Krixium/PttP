@@ -3,7 +3,9 @@
 #include <string>
 
 #include <QtWidgets/QMainWindow>
+#include <QScrollBar>
 #include <QSerialPortInfo>
+#include <QPlainTextEdit>
 
 #include "FileManip.h"
 #include "IOThread.h"
