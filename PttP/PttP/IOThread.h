@@ -26,6 +26,11 @@
 #define RCV_ENQ  0x08
 #define RCV_EOT  0x10
 #define RCV_DATA 0x20
+#define BLK_SEND 0x40
+
+#define TIMEOUT 2000
+
+
 
 using namespace std;
 

@@ -226,13 +226,16 @@ void IOThread::run()
 {
 	while (mRunning)
 	{
-		if (mFlag & RTS)
-		{
-			qDebug() << "Requesting to send";
-			SendENQ();
-			mFlag &= ~RTS;
-		}
 
+		if (mFlag & BLK_SEND)
+		{
+			if (mPort->waitForReadyRead(TIMEOUT))
+			{
+				GetDataFromPort();
+			}
+			mFlag &= ~BLK_SEND;
+		}
+		
 		// Receiving
 		if (mFlag & RCV_ACK)
 		{
@@ -262,7 +265,13 @@ void IOThread::run()
 			mFlag &= ~RCV_DATA;
 		}
 
-		msleep(1500);
+		if (mFlag & RTS)
+		{
+			qDebug() << "Requesting to send";
+			SendENQ();
+			mFlag &= ~RTS;
+		}
+		msleep(1000);
 	}
 }
 
