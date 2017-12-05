@@ -32,7 +32,12 @@ IOThread::~IOThread()
 {
 	mRunning = false;
 	mPort->close();
-	wait(1000);
+	quit();
+	if (!wait(3000))
+	{
+		terminate();
+		wait();
+	}
 }
 
 void IOThread::writeToPort(const QByteArray& frame)
