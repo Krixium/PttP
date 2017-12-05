@@ -20,6 +20,13 @@
 #define DATA_HEADER_SIZE 2
 #define DATA_LENGTH	512
 
+#define RTS		 0x01
+#define CTS		 0x02
+#define RCV_ACK  0x04
+#define RCV_ENQ  0x08
+#define RCV_EOT  0x10
+#define RCV_DATA 0x20
+
 using namespace std;
 
 class IOThread : public QThread
@@ -93,13 +100,7 @@ protected:
 private:
 	bool mRunning;
 
-	bool mRequestingToSend;
-	bool mClearToSend;
-
-	bool mACKReceived;
-	bool mENQReceived;
-	bool mEOTReceived;
-	bool mDataReceived;
+	uint32_t mFlag;
 
 	FileManip* mFile;
 	QSerialPort* mPort;

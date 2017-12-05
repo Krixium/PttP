@@ -11,12 +11,7 @@ const QByteArray IOThread::EOT_FRAME = SYN_BYTE + QByteArray(1, EOT);
 IOThread::IOThread(QObject *parent)
 	: QThread(parent)
 	, mRunning(true)
-	, mRequestingToSend(false)
-	, mClearToSend(false)
-	, mACKReceived(false)
-	, mENQReceived(false)
-	, mEOTReceived(false)
-	, mDataReceived(false)
+	, mFlag(0)
 	, mPort(new QSerialPort(this))
 	, mFile(new FileManip(this))
 	, mTxFrameCount(0)
@@ -37,7 +32,7 @@ IOThread::~IOThread()
 {
 	mRunning = false;
 	mPort->close();
-	// Exception thrown here
+	wait(1000);
 }
 
 void IOThread::writeToPort(const QByteArray& frame)
@@ -124,22 +119,22 @@ void IOThread::handleBuffer()
 {
 	if (mBuffer.contains(ENQ_FRAME))
 	{
-		mENQReceived = true;
+		mFlag |= RCV_ENQ;
 	}
 
 	if (mBuffer.contains(ACK_FRAME))
 	{
-		mACKReceived = true;
+		mFlag |= RCV_ACK;
 	}
 
 	if (mBuffer.contains(EOT_FRAME))
 	{
-		mEOTReceived = true;
+		mFlag |= RCV_EOT;
 	}
 
 	if (mBuffer.contains(SYN_BYTE + STX_BYTE))
 	{
-		mDataReceived = true;
+		mFlag |= RCV_DATA;
 	}
 }
 
@@ -161,9 +156,14 @@ void IOThread::handleIncomingDataFrame()
 
 	if (isDataFrameValid(dataFrame))
 	{
+		qDebug() << "data frame valid";
 		emit DataReceieved(getDataFromFrame(dataFrame));
 		SendACK();
 		mBuffer.clear();
+	}
+	else
+	{
+		qDebug() << "data frame invalid";
 	}
 }
 
@@ -189,44 +189,54 @@ void IOThread::run()
 {
 	while (mRunning)
 	{
-		if (mRequestingToSend)
+		if (mFlag & RTS)
 		{
+			qDebug() << "Requesting to send";
 			SendENQ();
-			mRequestingToSend = false;
+			mFlag &= ~RTS;
 		}
 
 		// Receiving
-		if (mACKReceived)
+		if (mFlag & RCV_ACK)
 		{
+			qDebug() << "Receieved ack";
 			sendFrame();
-			mACKReceived = false;
+			mFlag &= ~RCV_ACK;
 		}
 
-		if (mENQReceived)
+		if (mFlag & RCV_ENQ)
 		{
+			qDebug() << "Receveid enq";
 			handleENQ();
-			mENQReceived = false;
+			mFlag &= ~RCV_ENQ;
 		}
 
-		if (mEOTReceived)
+		if (mFlag & RCV_EOT)
 		{
+			qDebug() << "received eot";
 			handleEOT();
-			mEOTReceived = false;
+			mFlag &= ~RCV_EOT;
 		}
 
-		if (mDataReceived)
+		if (mFlag & RCV_DATA)
 		{
+			qDebug() << "received data";
 			handleIncomingDataFrame();
-			mDataReceived = false;
+			mFlag &= ~RCV_DATA;
 		}
 
-		msleep(1000);
+		msleep(1500);
 	}
 }
 
 void IOThread::sendFrame()
 {
-	if (mTxFrameCount < 10)
+	if (mFile->IsAtEndOfFile())
+	{
+		SendEOT();
+		mTxFrameCount = 0;
+	}
+	else if (mTxFrameCount < 10)
 	{
 		QByteArray data = mFile->GetNextBytes();
 		QByteArray frame = makeFrame(data);
@@ -238,7 +248,7 @@ void IOThread::sendFrame()
 	{
 		if (!mFile->IsAtEndOfFile())
 		{
-			mRequestingToSend = true;
+			mFlag |= RTS;
 		}
 
 		SendEOT();
@@ -248,7 +258,7 @@ void IOThread::sendFrame()
 
 void IOThread::SendFile()
 {
-	mRequestingToSend = true;
+	mFlag |= RTS;
 }
 
 /*-------------------------------------------------------------------------------------------------
