@@ -30,8 +30,6 @@
 
 #define TIMEOUT 2000
 
-
-
 using namespace std;
 
 class IOThread : public QThread

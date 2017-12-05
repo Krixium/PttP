@@ -235,6 +235,7 @@ void IOThread::run()
 				sendFrame();
 				mFlag &= ~RCV_ACK;
 			}
+
 			if (mFlag & RTS)
 			{
 				qDebug() << "Requesting to send";
