@@ -10,6 +10,8 @@
 #include <QString>
 #include <QThread>
 
+#include <QMessageBox>
+
 #include "CRC.h"
 
 #include "ByteArrayOperators.h"

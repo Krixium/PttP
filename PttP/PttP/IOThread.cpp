@@ -206,6 +206,7 @@ void IOThread::handleIncomingDataFrame()
 	}
 	else
 	{
+		QMessageBox::warning(nullptr, "Error", "YOU FKED UP");
 		qDebug() << "data frame invalid";
 	}
 }
