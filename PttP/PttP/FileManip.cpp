@@ -3,7 +3,7 @@
 FileManip::FileManip(QObject* parent)
 	: mFile("")
 	, mInStream(make_unique<ifstream>())
-{
+{ 
 }
 
 FileManip::~FileManip()

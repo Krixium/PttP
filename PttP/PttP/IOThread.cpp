@@ -91,7 +91,7 @@ void IOThread::sendFrame()
 	{
 		if (!mFile->IsAtEndOfFile())
 		{
-			mFlag |= RTS;
+			mFlag |= RTS | WAIT_RCV;
 		}
 
 		SendEOT();
@@ -172,24 +172,30 @@ void IOThread::handleBuffer()
 	if (mBuffer.contains(SYN_BYTE + STX_BYTE))
 	{
 		mFlag |= RCV_DATA;
+		mFlag |= WAIT_RCV;
 	}
 }
 
 void IOThread::handleENQ()
 {
 	SendACK();
+	mFlag |= WAIT_RCV;
 	mBuffer.clear();
 }
 
 void IOThread::handleEOT()
 {
 	mBuffer.clear();
+	mFlag &= ~WAIT_RCV;
 }
 
 void IOThread::handleIncomingDataFrame()
 {
-	int dataFrameStart = mBuffer.indexOf(SYN_BYTE);
+	int dataFrameStart = mBuffer.indexOf(SYN_BYTE + STX_BYTE);
 	QByteArray dataFrame = mBuffer.mid(dataFrameStart, DATA_FRAME_SIZE);
+
+	qDebug() << "incoming dataframe =" << dataFrame;
+	qDebug() << "incoming frame size =" << dataFrame.size();
 
 	if (isDataFrameValid(dataFrame))
 	{
@@ -226,43 +232,48 @@ void IOThread::run()
 {
 	while (mRunning)
 	{
-		if (mFlag & RTS)
-		{
-			qDebug() << "Requesting to send";
-			SendENQ();
-			mFlag &= ~RTS;
-		}
-
-		// Receiving
-		if (mFlag & RCV_ACK)
-		{
-			qDebug() << "Receieved ack";
-			sendFrame();
-			mFlag &= ~RCV_ACK;
-		}
-
 		if (mFlag & RCV_ENQ)
 		{
-			qDebug() << "Receveid enq";
+			qDebug() << "receveid enq";
 			handleENQ();
 			mFlag &= ~RCV_ENQ;
 		}
 
-		if (mFlag & RCV_EOT)
+		if (!(mFlag & WAIT_RCV))
 		{
-			qDebug() << "received eot";
-			handleEOT();
-			mFlag &= ~RCV_EOT;
+			if (mFlag & RCV_ACK)
+			{
+				qDebug() << "receieved ack";
+				sendFrame();
+				mFlag &= ~RCV_ACK;
+			}
+
+			if (mFlag & RTS)
+			{
+				qDebug() << "requesting to send";
+				SendENQ();
+				mFlag &= ~RTS;
+			}
 		}
 
-		if (mFlag & RCV_DATA)
+		if (mFlag & WAIT_RCV)
 		{
-			qDebug() << "received data";
-			handleIncomingDataFrame();
-			mFlag &= ~RCV_DATA;
+			if (mFlag & RCV_EOT)
+			{
+				qDebug() << "received eot";
+				handleEOT();
+				mFlag &= ~RCV_EOT;
+			}
+
+			if (mFlag & RCV_DATA)
+			{
+				qDebug() << "received data";
+				handleIncomingDataFrame();
+				mFlag &= ~RCV_DATA;
+			}
 		}
 
-		msleep(1500);
+		msleep(1000);
 	}
 }
 
@@ -287,6 +298,7 @@ void IOThread::run()
 -------------------------------------------------------------------------------------------------*/
 void IOThread::SendACK()
 {
+	qDebug() << "sending ack";
 	emit writeToPort(ACK_FRAME);
 }
 
@@ -310,6 +322,7 @@ void IOThread::SendACK()
 -------------------------------------------------------------------------------------------------*/
 void IOThread::SendENQ()
 {
+	qDebug() << "sending enq";
 	emit writeToPort(ENQ_FRAME);
 }
 
@@ -333,6 +346,7 @@ void IOThread::SendENQ()
 -------------------------------------------------------------------------------------------------*/
 void IOThread::SendEOT()
 {
+	qDebug() << "sending eot";
 	emit writeToPort(EOT_FRAME);
 }
 
@@ -350,7 +364,7 @@ void IOThread::SendEOT()
 -- INTERFACE: QByteArray makeFrame (const QByteArray& data)
 --		const QByteArray& data: The data to frame.
 --
--- RETURNS: The data wrapped in a frame. 
+-- RETURNS: The data wrapped in a frame.
 --
 -- NOTES:
 -- Wraps the given data in a frame specified by the Power to the Protocoleriat protocol.
@@ -382,7 +396,7 @@ QByteArray IOThread::makeFrame(const QByteArray& data)
 -- INTERFACE: bool isDataFrameValid (const QByteArray& frame)
 --		const QByteArray& frame: The frame recieved from the serial port.
 --
--- RETURNS: True if no errors were detected by the CRC. 
+-- RETURNS: True if no errors were detected by the CRC.
 --
 -- NOTES:
 -- Tries to detect if any errors occured on the data in the frame and returns true if if no errors
