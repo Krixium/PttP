@@ -91,7 +91,7 @@ void IOThread::sendFrame()
 	{
 		if (!mFile->IsAtEndOfFile())
 		{
-			mFlag |= RTS;
+			mFlag |= RTS | WAIT_RCV;
 		}
 
 		SendEOT();
@@ -184,6 +184,7 @@ void IOThread::handleENQ()
 void IOThread::handleEOT()
 {
 	mBuffer.clear();
+	mFlag &= ~WAIT_RCV;
 }
 
 void IOThread::handleIncomingDataFrame()
@@ -226,51 +227,45 @@ void IOThread::run()
 {
 	while (mRunning)
 	{
-
-		if (mFlag & BLK_SEND)
+		if (mFlag & ~WAIT_RCV)
 		{
-			if (mPort->waitForReadyRead(TIMEOUT))
+			if (mFlag & RCV_ACK)
 			{
-				GetDataFromPort();
+				qDebug() << "Receieved ack";
+				sendFrame();
+				mFlag &= ~RCV_ACK;
 			}
-			mFlag &= ~BLK_SEND;
+			if (mFlag & RTS)
+			{
+				qDebug() << "Requesting to send";
+				SendENQ();
+				mFlag &= ~RTS;
+			}
 		}
-		
-		// Receiving
-		if (mFlag & RCV_ACK)
+		else
 		{
-			qDebug() << "Receieved ack";
-			sendFrame();
-			mFlag &= ~RCV_ACK;
+			if (mFlag & RCV_ENQ)
+			{
+				qDebug() << "Receveid enq";
+				handleENQ();
+				mFlag &= ~RCV_ENQ;
+			}
+
+			if (mFlag & RCV_EOT)
+			{
+				qDebug() << "received eot";
+				handleEOT();
+				mFlag &= ~RCV_EOT;
+			}
+
+			if (mFlag & RCV_DATA)
+			{
+				qDebug() << "received data";
+				handleIncomingDataFrame();
+				mFlag &= ~RCV_DATA;
+			}
 		}
 
-		if (mFlag & RCV_ENQ)
-		{
-			qDebug() << "Receveid enq";
-			handleENQ();
-			mFlag &= ~RCV_ENQ;
-		}
-
-		if (mFlag & RCV_EOT)
-		{
-			qDebug() << "received eot";
-			handleEOT();
-			mFlag &= ~RCV_EOT;
-		}
-
-		if (mFlag & RCV_DATA)
-		{
-			qDebug() << "received data";
-			handleIncomingDataFrame();
-			mFlag &= ~RCV_DATA;
-		}
-
-		if (mFlag & RTS)
-		{
-			qDebug() << "Requesting to send";
-			SendENQ();
-			mFlag &= ~RTS;
-		}
 		msleep(1000);
 	}
 }
@@ -359,7 +354,7 @@ void IOThread::SendEOT()
 -- INTERFACE: QByteArray makeFrame (const QByteArray& data)
 --		const QByteArray& data: The data to frame.
 --
--- RETURNS: The data wrapped in a frame. 
+-- RETURNS: The data wrapped in a frame.
 --
 -- NOTES:
 -- Wraps the given data in a frame specified by the Power to the Protocoleriat protocol.
@@ -391,7 +386,7 @@ QByteArray IOThread::makeFrame(const QByteArray& data)
 -- INTERFACE: bool isDataFrameValid (const QByteArray& frame)
 --		const QByteArray& frame: The frame recieved from the serial port.
 --
--- RETURNS: True if no errors were detected by the CRC. 
+-- RETURNS: True if no errors were detected by the CRC.
 --
 -- NOTES:
 -- Tries to detect if any errors occured on the data in the frame and returns true if if no errors
