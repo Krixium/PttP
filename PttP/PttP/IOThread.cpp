@@ -172,12 +172,14 @@ void IOThread::handleBuffer()
 	if (mBuffer.contains(SYN_BYTE + STX_BYTE))
 	{
 		mFlag |= RCV_DATA;
+		mFlag |= WAIT_RCV;
 	}
 }
 
 void IOThread::handleENQ()
 {
 	SendACK();
+	mFlag |= WAIT_RCV;
 	mBuffer.clear();
 }
 
@@ -189,8 +191,11 @@ void IOThread::handleEOT()
 
 void IOThread::handleIncomingDataFrame()
 {
-	int dataFrameStart = mBuffer.indexOf(SYN_BYTE);
+	int dataFrameStart = mBuffer.indexOf(SYN_BYTE + STX_BYTE);
 	QByteArray dataFrame = mBuffer.mid(dataFrameStart, DATA_FRAME_SIZE);
+
+	qDebug() << "incoming dataframe =" << dataFrame;
+	qDebug() << "incoming frame size =" << dataFrame.size();
 
 	if (isDataFrameValid(dataFrame))
 	{
@@ -227,31 +232,32 @@ void IOThread::run()
 {
 	while (mRunning)
 	{
-		if (mFlag & ~WAIT_RCV)
+		if (mFlag & RCV_ENQ)
+		{
+			qDebug() << "receveid enq";
+			handleENQ();
+			mFlag &= ~RCV_ENQ;
+		}
+
+		if (!(mFlag & WAIT_RCV))
 		{
 			if (mFlag & RCV_ACK)
 			{
-				qDebug() << "Receieved ack";
+				qDebug() << "receieved ack";
 				sendFrame();
 				mFlag &= ~RCV_ACK;
 			}
 
 			if (mFlag & RTS)
 			{
-				qDebug() << "Requesting to send";
+				qDebug() << "requesting to send";
 				SendENQ();
 				mFlag &= ~RTS;
 			}
 		}
-		else
-		{
-			if (mFlag & RCV_ENQ)
-			{
-				qDebug() << "Receveid enq";
-				handleENQ();
-				mFlag &= ~RCV_ENQ;
-			}
 
+		if (mFlag & WAIT_RCV)
+		{
 			if (mFlag & RCV_EOT)
 			{
 				qDebug() << "received eot";
@@ -292,6 +298,7 @@ void IOThread::run()
 -------------------------------------------------------------------------------------------------*/
 void IOThread::SendACK()
 {
+	qDebug() << "sending ack";
 	emit writeToPort(ACK_FRAME);
 }
 
@@ -315,6 +322,7 @@ void IOThread::SendACK()
 -------------------------------------------------------------------------------------------------*/
 void IOThread::SendENQ()
 {
+	qDebug() << "sending enq";
 	emit writeToPort(ENQ_FRAME);
 }
 
@@ -338,6 +346,7 @@ void IOThread::SendENQ()
 -------------------------------------------------------------------------------------------------*/
 void IOThread::SendEOT()
 {
+	qDebug() << "sending eot";
 	emit writeToPort(EOT_FRAME);
 }
 
