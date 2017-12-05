@@ -117,5 +117,5 @@ void PttP::SetFileName(const string newFileName)
 -------------------------------------------------------------------------------------------------*/
 void PttP::DisplayDataFromPort(const QString data)
 {
-	ui.plainTextEdit->appendPlainText(data);
+	ui.plainTextEdit->insertPlainText(data);
 }
