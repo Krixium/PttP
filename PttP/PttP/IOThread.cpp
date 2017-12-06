@@ -99,6 +99,7 @@ void IOThread::sendFrame()
 {
 	if (mTxFrameCount < 10)
 	{
+		mRTXCount = 0;
 		if (mFile->IsAtEndOfFile())
 		{
 			qDebug() << "end of file sending eot";
@@ -107,10 +108,10 @@ void IOThread::sendFrame()
 		}
 		else
 		{
-			qDebug() << "sending frame" << mTxFrameCount;
 			writeToPort(makeFrame(mFile->GetNextBytes()));
 			setFlag(SENT_DATA, true);
 			setFlag(RCV_ACK, false);
+			mTxFrameCount++;
 			qDebug() << "sendFrame starting timeout of 2s";
 			startTimeout(TIMEOUT_LEN);
 		}
@@ -126,7 +127,7 @@ void IOThread::resendFrame()
 {
 	if (mRTXCount < 3)
 	{
-		qDebug() << "resending frame" << mRTXCount;
+		qDebug() << mRTXCount << "time resending frame" << mTxFrameCount;
 		writeToPort(makeFrame(mFile->GetPreviousBytes()));
 		setFlag(SENT_DATA, true);
 		setFlag(RCV_ACK, false);
@@ -144,7 +145,6 @@ void IOThread::resendFrame()
 
 void IOThread::sendACK()
 {
-	qDebug() << "sending ack";
 	emit writeToPort(ACK_FRAME);
 	setFlag(SENT_ACK, true);
 	qDebug() << "sendACK starting timeout of 2s";
@@ -153,7 +153,6 @@ void IOThread::sendACK()
 
 void IOThread::sendENQ()
 {
-	qDebug() << "sending enq";
 	emit writeToPort(ENQ_FRAME);
 	setFlag(SENT_ENQ, true);
 	qDebug() << "sendENQ starting timeout of 2s";
@@ -162,8 +161,8 @@ void IOThread::sendENQ()
 
 void IOThread::sendEOT()
 {
-	qDebug() << "sending eot";
 	emit writeToPort(EOT_FRAME);
+	mTxFrameCount = 0;
 	setFlag(SENT_EOT, true);
 	setFlag(FIN, true);
 	qDebug() << "sendEOT starting timeout of 2s";
@@ -172,7 +171,6 @@ void IOThread::sendEOT()
 
 void IOThread::backoff()
 {
-	qDebug() << "backing off";
 	setFlag(FIN, true);
 	qDebug() << "backoff starting timeout of 2s";
 	startTimeout(TIMEOUT_LEN);
@@ -200,6 +198,10 @@ void IOThread::handleBuffer()
 		setFlag(RCV_ACK, true);
 		setFlag(TOR, false);
 		mBuffer.clear();
+		if (isFlagSet(RTS))
+		{
+			sendENQ();
+		}
 	}
 
 	if (mBuffer.contains(EOT_FRAME))
@@ -220,9 +222,6 @@ void IOThread::checkPotentialDataFrame()
 	int dataFrameStart = mBuffer.indexOf(SYN_BYTE + STX_BYTE);
 	QByteArray dataFrame = mBuffer.mid(dataFrameStart, DATA_FRAME_SIZE);
 
-	qDebug() << "incoming dataframe =" << dataFrame;
-	qDebug() << "incoming frame size =" << dataFrame.size();
-
 	if (isDataFrameValid(dataFrame))
 	{
 		qDebug() << "data frame valid";
@@ -233,10 +232,9 @@ void IOThread::checkPotentialDataFrame()
 	}
 	else
 	{
-		qDebug() << "data frame invalid";
+		qDebug() << "data frame invalid starting timeout of 6s";
 		setFlag(RCV_DATA, true);
 		setFlag(RCV_ERR, true);
-		qDebug() << "checkPotentialDataFrame starting timeout of 6s";
 		startTimeout(TIMEOUT_LEN * 3);
 	}
 }
