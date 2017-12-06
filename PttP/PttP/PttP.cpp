@@ -163,6 +163,6 @@ void PttP::UpdateLabel(const QString text)
 	// Error bit rate
 	else
 	{
-		ui.labelBRE->setText("Bit Error Rate: " + text);
+		ui.labelBRE->setText("Bit Error Rate: " + text + "%");
 	}
 }
