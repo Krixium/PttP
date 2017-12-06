@@ -145,6 +145,7 @@ void IOThread::sendEOT()
 	startTimeout(TIMEOUT_LEN);
 }
 
+
 void IOThread::GetDataFromPort()
 {
 	mBuffer += mPort->readAll();
@@ -253,8 +254,64 @@ void IOThread::run()
 		}
 		// RCV_ENQ false
 		else
-		{ }
-		
+		{
+			if (isFlagSet(RTS))
+			{
+				if (isFlagSet(FIN))
+				{
+					if (isFlagSet(TOR))
+					{
+						continue;
+					}
+					else
+					{
+						setFlag(FIN, false);
+					}
+				}
+				else
+				{
+					if (isFlagSet(SENT_ENQ))
+					{
+						if (isFlagSet(RCV_ACK))
+						{
+							sendFrame();
+						}
+						else
+						{
+							if (isFlagSet(SENT_DATA))
+							{
+								if (isFlagSet(TOR))
+								{
+									continue;
+								}
+								else
+								{
+									//retransmit
+									resendFrame();
+								}
+							}
+							else
+							{
+								if (isFlagSet(TOR))
+								{
+									continue;
+								}
+								else
+								{
+									//back off
+									setFlag(FIN, true);
+									startTimeout(TIMEOUT_LEN);
+								}
+							}
+						}
+					}
+					else
+					{
+						sendENQ();
+					}
+				}
+			}
+		}
 	}
 }
 
