@@ -5,4 +5,6 @@
 #define ACK 0x06
 #define ENQ 0x05
 #define EOT 0x04
+#define RVI 0x07
+
 

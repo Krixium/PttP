@@ -20,6 +20,9 @@ PttP::PttP(QWidget *parent)
 	// Start button to send ENQ
 	connect(ui.pushButtonStart, &QPushButton::pressed, mIOThread, &IOThread::SendFile, Qt::QueuedConnection);
 
+	//send RVI signal
+	connect(ui.pushButtonStop, &QPushButton::pressed, mIOThread, &IOThread::SetRVI, Qt::QueuedConnection);
+
 	// Display data from valid data frame
 	connect(mIOThread, &IOThread::DataReceieved, this, &PttP::DisplayDataFromPort);
 
