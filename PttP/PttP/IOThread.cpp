@@ -254,7 +254,7 @@ void IOThread::checkPotentialDataFrame()
 		setFlag(RCV_ERR, true);
 		startTimeout(TIMEOUT_LEN * 3);
 	}
-	emit UpdateLabel(QString::number(byteError / byteValid * 100));
+	emit UpdateLabel(QString::number(byteError / (byteError + byteValid) * 100));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
