@@ -140,7 +140,7 @@ private:
 	bool isDataFrameValid(const QByteArray& frame);
 	QString getDataFromFrame(const QByteArray& frame);
 
-	public slots:
+public slots:
 	void SendFile();
 	void SetRVI();
 	void GetDataFromPort();
