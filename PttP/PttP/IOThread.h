@@ -22,18 +22,20 @@
 #define DATA_HEADER_SIZE 2
 #define DATA_LENGTH	512
 
-#define RTS			0x001
-#define FIN			0x002
-#define RCV_ENQ		0x004
-#define RCV_ACK		0x008
-#define RCV_DATA	0x010
-#define RCV_EOT		0x020
-#define RCV_ERR		0x040
-#define SENT_ENQ	0x080
-#define SENT_ACK	0x100
-#define SENT_DATA	0x200
-#define SENT_EOT	0x400
-#define TOR			0x800
+#define RTS			0x0001
+#define FIN			0x0002
+#define RCV_ENQ		0x0004
+#define RCV_ACK		0x0008
+#define RCV_DATA	0x0010
+#define RCV_EOT		0x0020
+#define RCV_ERR		0x0040
+#define SENT_ENQ	0x0080
+#define SENT_ACK	0x0100
+#define SENT_DATA	0x0200
+#define SENT_EOT	0x0400
+#define TOR			0x0800
+#define RCV_RVI     0x1000
+#define SEND_RVI    0x2000
 
 #define TIMEOUT_LEN 2000
 
@@ -50,6 +52,7 @@ public:
 	const static QByteArray ACK_FRAME;
 	const static QByteArray ENQ_FRAME;
 	const static QByteArray EOT_FRAME;
+	const static QByteArray RVI_FRAME;
 
 	IOThread(QObject *parent);
 	~IOThread();
@@ -121,6 +124,7 @@ private:
 	void sendACK();
 	void sendENQ();
 	void sendEOT();
+	void sendRVI();
 	void sendFrame();
 	void resendFrame();
 	void resetFlags();
@@ -136,6 +140,7 @@ private:
 
 public slots:
 	void SendFile();
+	void SetRVI();
 	void GetDataFromPort();
 	void SetPort();
 	void writeToPort(const QByteArray& frame);

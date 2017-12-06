@@ -7,6 +7,7 @@ const QByteArray IOThread::STX_BYTE = QByteArray(1, STX);
 const QByteArray IOThread::ACK_FRAME = SYN_BYTE + QByteArray(1, ACK);
 const QByteArray IOThread::ENQ_FRAME = SYN_BYTE + QByteArray(1, ENQ);
 const QByteArray IOThread::EOT_FRAME = SYN_BYTE + QByteArray(1, EOT);
+const QByteArray IOThread::RVI_FRAME = SYN_BYTE + QByteArray(1, RVI);
 
 IOThread::IOThread(QObject *parent)
 	: QThread(parent)
@@ -93,6 +94,12 @@ void IOThread::SendFile()
 {
 	qDebug() << "turning rts on to send file";
 	setFlag(RTS, true);
+}
+
+void IOThread::SetRVI()
+{
+	qDebug() << "setting rvi flag";
+	setFlag(SEND_RVI, true);
 }
 
 void IOThread::sendFrame()
@@ -184,6 +191,13 @@ void IOThread::sendEOT()
 	startTimeout(TIMEOUT_LEN);
 }
 
+void IOThread::sendRVI()
+{
+	emit writeToPort(RVI_FRAME);
+	setFlag(SEND_RVI, false);
+	resetFlagsNoTimeout();
+}
+
 void IOThread::backoff()
 {
 	setFlag(FIN, true);
@@ -221,6 +235,14 @@ void IOThread::handleBuffer()
 	{
 		qDebug() << "received eot";
 		setFlag(RCV_EOT, true);
+		mBuffer.clear();
+	}
+
+	if (mBuffer.contains(RVI_FRAME))
+	{
+		qDebug() << "received RVI";
+		setFlag(RCV_RVI, true);
+		mTxFrameCount = 0;
 		mBuffer.clear();
 	}
 
@@ -263,6 +285,10 @@ void IOThread::run()
 	while (mRunning)
 	{
 		updateTimeout();
+		if (isFlagSet(SEND_RVI))
+		{
+			sendRVI();
+		}
 
 		if (isFlagSet(RCV_ENQ))
 		{
@@ -319,6 +345,12 @@ void IOThread::run()
 		// RCV_ENQ false
 		else
 		{
+			if (isFlagSet(RCV_RVI))
+			{
+				resetFlags();
+				continue;
+			}
+
 			if (isFlagSet(RTS))
 			{
 				if (isFlagSet(FIN))
@@ -375,7 +407,7 @@ void IOThread::run()
 				}
 			}
 		}
-		msleep(50);
+		msleep(100);
 	}
 }
 
