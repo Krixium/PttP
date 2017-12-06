@@ -258,26 +258,39 @@ void IOThread::run()
 			{
 				if (isFlagSet(SENT_ACK))
 				{
-					if (isFlagSet(RCV_DATA))
+					if (isFlagSet(RCV_EOT))
 					{
-						checkPotentialDataFrame();
-						if (isFlagSet(RCV_ERR))
+						if (isFlagSet(RTS))
 						{
-							setFlag(RCV_ERR, false);
-							setFlag(RCV_DATA, false);
+							sendENQ();
 						}
 						else
 						{
-							sendACK();
-							emit DataReceieved(mFrameData);
+							resetFlags();
 						}
 					}
-					// RCV_data is false
 					else
 					{
-						if (!isFlagSet(TOR))
+						if (isFlagSet(RCV_DATA))
 						{
-							resetFlags();
+							if (isFlagSet(RCV_ERR))
+							{
+								setFlag(RCV_ERR, false);
+								setFlag(RCV_DATA, false);
+							}
+							else
+							{
+								sendACK();
+								emit DataReceieved(mFrameData);
+							}
+						}
+						// RCV_data is false
+						else
+						{
+							if (!isFlagSet(TOR))
+							{
+								resetFlags();
+							}
 						}
 					}
 				}
@@ -288,7 +301,7 @@ void IOThread::run()
 			}
 			else
 			{
-				setFlag(!RCV_ENQ, false);
+				setFlag(RCV_ENQ, false);
 			}
 		}
 		// RCV_ENQ false
@@ -355,10 +368,20 @@ void IOThread::run()
 
 void IOThread::resetFlags()
 {
-	setFlag(RCV_ENQ, false);
-	setFlag(RTS, false);
-	setFlag(FIN, true);
-	setFlag(SENT_ENQ, false)
+	if (isFlagSet(RTS))
+	{
+		mMutex.lock();
+		mFlags = 0;
+		mFlags |= RTS | FIN;
+		mMutex.unlock();
+	}
+	else
+	{
+		mMutex.lock();
+		mFlags = 0;
+		mFlags |= FIN;
+		mMutex.unlock();
+	}
 	qDebug() << "resetFlags starting timeout of 2s";
 	startTimeout(TIMEOUT_LEN);
 }
