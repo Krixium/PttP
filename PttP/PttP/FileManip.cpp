@@ -104,5 +104,13 @@ QByteArray FileManip::GetPreviousBytes()
 
 bool FileManip::IsAtEndOfFile()
 {
-	return mInStream->eof();
+	bool result = mInStream->eof();
+
+	if (result)
+	{
+		mInStream->clear();
+		mInStream->seekg(0, ios::beg);
+	}
+	
+	return result;
 }
