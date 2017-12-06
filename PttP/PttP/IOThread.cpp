@@ -83,6 +83,7 @@ void IOThread::updateTimeout()
 	{
 		if (QTime::currentTime() > mTimeout)
 		{
+			qDebug() << "turning timeout off";
 			setFlag(TOR, false);
 		}
 	}
@@ -90,6 +91,7 @@ void IOThread::updateTimeout()
 
 void IOThread::SendFile()
 {
+	qDebug() << "turning rts on to send file";
 	setFlag(RTS, true);
 }
 
@@ -99,40 +101,44 @@ void IOThread::sendFrame()
 	{
 		if (mFile->IsAtEndOfFile())
 		{
+			qDebug() << "end of file sending eot";
 			setFlag(RTS, false);
 			sendEOT();
 		}
 		else
 		{
+			qDebug() << "sending frame" << mTxFrameCount;
 			writeToPort(makeFrame(mFile->GetNextBytes()));
 			setFlag(SENT_DATA, true);
 			setFlag(RCV_ACK, false);
+			qDebug() << "sendFrame starting timeout of 2s";
 			startTimeout(TIMEOUT_LEN);
 		}
 	}
 	else
 	{
+		qDebug() << "hit transmission cap, sending eot";
 		sendEOT();
 	}
-
 }
 
 void IOThread::resendFrame()
 {
 	if (mRTXCount < 3)
 	{
+		qDebug() << "resending frame" << mRTXCount;
 		writeToPort(makeFrame(mFile->GetPreviousBytes()));
 		setFlag(SENT_DATA, true);
 		setFlag(RCV_ACK, false);
 		mRTXCount++;
+		qDebug() << "resendFrame starting timeout of 2s";
 		startTimeout(TIMEOUT_LEN);
 	}
 	else
 	{
-		setFlag(RCV_ENQ, false);
-		setFlag(RTS, true);
-		setFlag(FIN, true);
-		startTimeout(TIMEOUT_LEN);
+		qDebug() << "hit max retransmit, backing off";
+		resetFlags();
+		qDebug() << "resendFrame starting timeout of 2s";
 	}
 }
 
@@ -141,6 +147,7 @@ void IOThread::sendACK()
 	qDebug() << "sending ack";
 	emit writeToPort(ACK_FRAME);
 	setFlag(SENT_ACK, true);
+	qDebug() << "sendACK starting timeout of 2s";
 	startTimeout(TIMEOUT_LEN * 3);
 }
 
@@ -149,6 +156,7 @@ void IOThread::sendENQ()
 	qDebug() << "sending enq";
 	emit writeToPort(ENQ_FRAME);
 	setFlag(SENT_ENQ, true);
+	qDebug() << "sendENQ starting timeout of 2s";
 	startTimeout(TIMEOUT_LEN * 3);
 }
 
@@ -158,6 +166,7 @@ void IOThread::sendEOT()
 	emit writeToPort(EOT_FRAME);
 	setFlag(SENT_EOT, true);
 	setFlag(FIN, true);
+	qDebug() << "sendEOT starting timeout of 2s";
 	startTimeout(TIMEOUT_LEN);
 }
 
@@ -165,6 +174,7 @@ void IOThread::backoff()
 {
 	qDebug() << "backing off";
 	setFlag(FIN, true);
+	qDebug() << "backoff starting timeout of 2s";
 	startTimeout(TIMEOUT_LEN);
 }
 
@@ -179,18 +189,22 @@ void IOThread::handleBuffer()
 {
 	if (mBuffer.contains(ENQ_FRAME))
 	{
+		qDebug() << "received enq";
 		setFlag(RCV_ENQ, true);
 		mBuffer.clear();
 	}
 
 	if (mBuffer.contains(ACK_FRAME))
 	{
+		qDebug() << "received ack";
 		setFlag(RCV_ACK, true);
+		setFlag(TOR, false);
 		mBuffer.clear();
 	}
 
 	if (mBuffer.contains(EOT_FRAME))
 	{
+		qDebug() << "received eot";
 		setFlag(RCV_EOT, true);
 		mBuffer.clear();
 	}
@@ -222,6 +236,7 @@ void IOThread::checkPotentialDataFrame()
 		qDebug() << "data frame invalid";
 		setFlag(RCV_DATA, true);
 		setFlag(RCV_ERR, true);
+		qDebug() << "checkPotentialDataFrame starting timeout of 6s";
 		startTimeout(TIMEOUT_LEN * 3);
 	}
 }
@@ -233,6 +248,7 @@ void IOThread::checkPotentialDataFrame()
 void IOThread::run()
 {
 	resetFlags();
+
 	while (mRunning)
 	{
 		updateTimeout();
@@ -341,12 +357,11 @@ void IOThread::run()
 void IOThread::resetFlags()
 {
 	setFlag(RCV_ENQ, false);
-	setFlag(RTS, true);
+	setFlag(RTS, false);
 	setFlag(FIN, true);
+	qDebug() << "resetFlags starting timeout of 2s";
 	startTimeout(TIMEOUT_LEN);
 }
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 ///							Serial Port Functions							 ///
