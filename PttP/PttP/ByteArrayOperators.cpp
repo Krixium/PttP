@@ -1,3 +1,27 @@
+/*------------------------------------------------------------------------------------------------------------------
+-- SOURCE FILE: ByteArrayOperators.cpp - A group of operator overloads for appending uints.
+--
+-- PROGRAM: PttP
+--
+-- FUNCTIONS:
+-- QByteArray &operator<<(QByteArray& l, unint8_t r)
+-- QByteArray &operator<<(QByteArray& l, unint16_t r)
+-- QByteArray &operator<<(QByteArray& l, unint32_t r)
+--
+-- DATE: Nov 29, 2017
+--
+-- REVISIONS: N/A
+--
+-- DESIGNER: Matteo Italia
+--
+-- PROGRAMMER: Benny Wang
+--
+-- NOTES:
+-- The function in this file allow for a block of binary to be converted to bytes and appended to a QByteArray.
+--
+-- Credit for creating these functions goes to Matteo Italia on Stack Overflow.
+-- https://stackoverflow.com/users/214671/matteo-italia
+----------------------------------------------------------------------------------------------------------------------*/
 #include "ByteArrayOperators.h"
 
 /*-------------------------------------------------------------------------------------------------
