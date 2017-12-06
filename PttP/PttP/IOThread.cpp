@@ -97,6 +97,7 @@ void IOThread::sendFrame()
 	writeToPort(makeFrame(mFile->GetNextBytes()));
 	setFlag(SENT_DATA, true);
 	setFlag(RCV_ACK, false);
+	startTimeout(TIMEOUT_LEN * 3);
 }
 
 void IOThread::sendACK()
@@ -112,6 +113,7 @@ void IOThread::sendENQ()
 	qDebug() << "sending enq";
 	emit writeToPort(ENQ_FRAME);
 	setFlag(SENT_ENQ, true);
+	startTimeout(TIMEOUT_LEN * 3);
 }
 
 void IOThread::sendEOT()
@@ -120,6 +122,7 @@ void IOThread::sendEOT()
 	emit writeToPort(EOT_FRAME);
 	setFlag(SENT_EOT, true);
 	setFlag(FIN, true);
+	startTimeout(TIMEOUT_LEN);
 }
 
 void IOThread::GetDataFromPort()
@@ -187,7 +190,9 @@ void IOThread::run()
 {
 	while (mRunning)
 	{
+		updateTimeout();
 
+		
 	}
 }
 
