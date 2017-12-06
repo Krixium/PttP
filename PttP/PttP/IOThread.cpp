@@ -147,6 +147,7 @@ void IOThread::sendACK()
 {
 	emit writeToPort(ACK_FRAME);
 	setFlag(SENT_ACK, true);
+	setFlag(RCV_DATA, false);
 	qDebug() << "sendACK starting timeout of 2s";
 	startTimeout(TIMEOUT_LEN * 3);
 }
@@ -155,8 +156,21 @@ void IOThread::sendENQ()
 {
 	emit writeToPort(ENQ_FRAME);
 	setFlag(SENT_ENQ, true);
-	qDebug() << "sendENQ starting timeout of 2s";
-	startTimeout(TIMEOUT_LEN * 3);
+	qDebug() << "sendENQ starting timeout of 2s x3";
+	qDebug() << "RTS" << isFlagSet(RTS);
+	qDebug() << "FIN" << isFlagSet(FIN);
+	qDebug() << "RCV_ENQ" << isFlagSet(RCV_ENQ);
+	qDebug() << "RCV_ACK" << isFlagSet(RCV_ACK);
+	qDebug() << "RCV_DATA" << isFlagSet(RCV_DATA);
+	qDebug() << "RCV_EOT" << isFlagSet(RCV_EOT);
+	qDebug() << "RCV_ERR" << isFlagSet(RCV_ERR);
+	qDebug() << "SENT_ENQ" << isFlagSet(SENT_ENQ);
+	qDebug() << "SENT_ACK" << isFlagSet(SENT_ACK);
+	qDebug() << "SENT_DATA" << isFlagSet(SENT_DATA);
+	qDebug() << "SENT_EOT" << isFlagSet(SENT_EOT);
+	qDebug() << "TOR" << isFlagSet(TOR);
+
+	startTimeout(TIMEOUT_LEN);
 }
 
 void IOThread::sendEOT()
@@ -165,6 +179,7 @@ void IOThread::sendEOT()
 	mTxFrameCount = 0;
 	setFlag(SENT_EOT, true);
 	setFlag(FIN, true);
+	setFlag(SENT_ENQ, false);
 	qDebug() << "sendEOT starting timeout of 2s";
 	startTimeout(TIMEOUT_LEN);
 }
@@ -199,10 +214,7 @@ void IOThread::handleBuffer()
 		setFlag(RCV_ACK, true);
 		setFlag(TOR, false);
 		mBuffer.clear();
-		if (isFlagSet(RTS))
-		{
-			sendENQ();
-		}
+	
 	}
 
 	if (mBuffer.contains(EOT_FRAME))
@@ -262,11 +274,11 @@ void IOThread::run()
 					{
 						if (isFlagSet(RTS))
 						{
-							sendENQ();
+							resetFlagsNoTimeout();
 						}
 						else
 						{
-							resetFlags();
+							resetFlagsNoTimeout();
 						}
 					}
 					else
@@ -289,7 +301,7 @@ void IOThread::run()
 						{
 							if (!isFlagSet(TOR))
 							{
-								resetFlags();
+								resetFlagsNoTimeout();
 							}
 						}
 					}
@@ -351,7 +363,7 @@ void IOThread::run()
 								else
 								{
 									//back off
-									backoff();
+									resetFlags();
 								}
 							}
 						}
@@ -363,6 +375,7 @@ void IOThread::run()
 				}
 			}
 		}
+		msleep(50);
 	}
 }
 
@@ -384,6 +397,25 @@ void IOThread::resetFlags()
 	}
 	qDebug() << "resetFlags starting timeout of 2s";
 	startTimeout(TIMEOUT_LEN);
+}
+
+void IOThread::resetFlagsNoTimeout()
+{
+	if (isFlagSet(RTS))
+	{
+		mMutex.lock();
+		mFlags = 0;
+		mFlags |= RTS | FIN;
+		mMutex.unlock();
+	}
+	else
+	{
+		mMutex.lock();
+		mFlags = 0;
+		mFlags |= FIN;
+		mMutex.unlock();
+	}
+	qDebug() << "resetFlags no timeout";
 }
 
 ////////////////////////////////////////////////////////////////////////////////
