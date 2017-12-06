@@ -155,10 +155,14 @@ void PttP::UpdateLabel(const QString text)
 		numACK += 1;
 		ui.labelNumOfAcks->setText("Number of ACKs: " + QString::number(numACK));
 	}
-	if (text == "PacketReceived")
+	else if (text == "PacketReceived")
 	{
 		numPackets += 1;
 		ui.labelPacketsTransfered->setText("Packets Transfered: " + QString::number(numPackets));
 	}
-
+	// Error bit rate
+	else
+	{
+		ui.labelBRE->setText("Bit Error Rate: " + text);
+	}
 }

@@ -16,6 +16,8 @@ IOThread::IOThread(QObject *parent)
 	, mFile(new FileManip(this))
 	, mTxFrameCount(0)
 	, mRTXCount(0)
+	, byteError(0)
+	, byteValid(0)
 {
 	mPort->setBaudRate(QSerialPort::Baud9600);
 	mPort->setDataBits(QSerialPort::Data8);
@@ -109,6 +111,7 @@ void IOThread::sendFrame()
 		else
 		{
 			writeToPort(makeFrame(mFile->GetNextBytes()));
+			emit UpdateLabel("PacketReceived");
 			setFlag(SENT_DATA, true);
 			setFlag(RCV_ACK, false);
 			mTxFrameCount++;
@@ -148,6 +151,7 @@ void IOThread::sendACK()
 	emit writeToPort(ACK_FRAME);
 	setFlag(SENT_ACK, true);
 	setFlag(RCV_DATA, false);
+	emit UpdateLabel("ACK");
 	qDebug() << "sendACK starting timeout of 2s";
 	startTimeout(TIMEOUT_LEN * 3);
 }
@@ -211,7 +215,6 @@ void IOThread::handleBuffer()
 	if (mBuffer.contains(ACK_FRAME))
 	{
 		qDebug() << "received ack";
-		emit UpdateLabel("ACK");
 		setFlag(RCV_ACK, true);
 		setFlag(TOR, false);
 		mBuffer.clear();
@@ -239,7 +242,6 @@ void IOThread::checkPotentialDataFrame()
 	if (isDataFrameValid(dataFrame))
 	{
 		qDebug() << "data frame valid";
-		emit UpdateLabel("PacketReceived");
 		setFlag(RCV_DATA, true);
 		setFlag(RCV_ERR, false);
 		mFrameData = getDataFromFrame(dataFrame);
@@ -252,6 +254,7 @@ void IOThread::checkPotentialDataFrame()
 		setFlag(RCV_ERR, true);
 		startTimeout(TIMEOUT_LEN * 3);
 	}
+	emit UpdateLabel(QString::number(byteError / byteValid));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -456,6 +459,8 @@ bool IOThread::isDataFrameValid(const QByteArray& frame)
 	QByteArray recalculatedCrc = QByteArray();
 	recalculatedCrc = recalculatedCrc << CRC::Calculate(frameData.data(), DATA_LENGTH, CRC::CRC_32());
 
+	int stuffingCount = frameData.count(char(0x0));
+	recalculatedCrc == receivedCrc ? byteValid = byteValid + DATA_LENGTH - stuffingCount : byteError = byteError + DATA_LENGTH - stuffingCount;
 	return recalculatedCrc == receivedCrc;
 }
 
