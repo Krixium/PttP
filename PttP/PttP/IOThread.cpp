@@ -96,6 +96,7 @@ void IOThread::sendFrame()
 {
 	writeToPort(makeFrame(mFile->GetNextBytes()));
 	setFlag(SENT_DATA, true);
+	setFlag(RCV_ACK, false);
 }
 
 void IOThread::sendACK()
