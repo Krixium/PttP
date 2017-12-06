@@ -66,6 +66,23 @@ void IOThread::SetPort()
 	mPort->open(QSerialPort::ReadWrite);
 }
 
+void IOThread::startTimeout()
+{
+	mTimeout = QTime::currentTime().addMSecs(TIMEOUT_LEN).addMSecs(qrand() % 1000);
+	mFlag |= TIMEOUT;
+}
+
+void IOThread::updateTimeout()
+{
+	if (mFlag & TIMEOUT)
+	{
+		if (QTime::currentTime() > mTimeout)
+		{
+			mFlag &= ~TIMEOUT;
+		}
+	}
+}
+
 void IOThread::writeToPort(const QByteArray& frame)
 {
 	mPort->write(frame);
@@ -92,6 +109,7 @@ void IOThread::sendFrame()
 		if (!mFile->IsAtEndOfFile())
 		{
 			mFlag |= RTS | WAIT_RCV;
+			startTimeout();
 		}
 
 		SendEOT();
@@ -171,8 +189,8 @@ void IOThread::handleBuffer()
 
 	if (mBuffer.contains(SYN_BYTE + STX_BYTE))
 	{
-		mFlag |= RCV_DATA;
-		mFlag |= WAIT_RCV;
+		mFlag |= RCV_DATA | WAIT_RCV;
+		startTimeout();
 	}
 }
 
@@ -206,7 +224,6 @@ void IOThread::handleIncomingDataFrame()
 	}
 	else
 	{
-		QMessageBox::warning(nullptr, "Error", "YOU FKED UP");
 		qDebug() << "data frame invalid";
 	}
 }
@@ -233,11 +250,20 @@ void IOThread::run()
 {
 	while (mRunning)
 	{
+		updateTimeout();
+		qDebug() << "WAIT_RCV" << (mFlag & WAIT_RCV);
+		qDebug() << "TIMEOUT" << (mFlag & TIMEOUT);
+
 		if (mFlag & RCV_ENQ)
 		{
 			qDebug() << "receveid enq";
 			handleENQ();
 			mFlag &= ~RCV_ENQ;
+		}
+
+		if (!(mFlag & TIMEOUT) && (mFlag & WAIT_RCV))
+		{
+			mFlag &= ~WAIT_RCV;
 		}
 
 		if (!(mFlag & WAIT_RCV))
@@ -274,7 +300,7 @@ void IOThread::run()
 			}
 		}
 
-		msleep(1000);
+		msleep(100);
 	}
 }
 

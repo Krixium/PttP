@@ -1,7 +1,7 @@
 #pragma once
 
-#include <iomanip>
 #include <cstdint>
+#include <iomanip>
 
 #include <QAction>
 #include <QByteArray>
@@ -9,8 +9,7 @@
 #include <QSerialPort>
 #include <QString>
 #include <QThread>
-
-#include <QMessageBox>
+#include <QTime>
 
 #include "CRC.h"
 
@@ -18,7 +17,7 @@
 #include "ControlCharacters.h"
 #include "FileManip.h"
 
-#define DATA_FRAME_SIZE	518
+#define DATA_FRAME_SIZE 518
 #define DATA_HEADER_SIZE 2
 #define DATA_LENGTH	512
 
@@ -29,8 +28,9 @@
 #define RCV_EOT  0x10
 #define RCV_DATA 0x20
 #define WAIT_RCV 0x40
+#define TIMEOUT  0x80
 
-#define TIMEOUT 2000
+#define TIMEOUT_LEN 2000
 
 using namespace std;
 
@@ -112,6 +112,10 @@ private:
 
 	QByteArray mBuffer;
 	int mTxFrameCount;
+	QTime mTimeout;
+
+	void startTimeout();
+	void updateTimeout();
 
 	void sendFrame();
 	QByteArray makeFrame(const QByteArray& data);
