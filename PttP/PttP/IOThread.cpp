@@ -100,6 +100,14 @@ void IOThread::sendFrame()
 	startTimeout(TIMEOUT_LEN * 3);
 }
 
+void IOThread::resendFrame()
+{
+	writeToPort(makeFrame(mFile->GetPreviousBytes()));
+	setFlag(SENT_DATA, true);
+	setFlag(RCV_ACK, false);
+	startTimeout(TIMEOUT_LEN * 3);
+}
+
 void IOThread::sendACK()
 {
 	qDebug() << "sending ack";

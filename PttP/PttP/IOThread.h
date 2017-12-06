@@ -121,6 +121,7 @@ private:
 	void sendENQ();
 	void sendEOT();
 	void sendFrame();
+	void resendFrame();
 	QByteArray makeFrame(const QByteArray& data);
 
 	void handleBuffer();
