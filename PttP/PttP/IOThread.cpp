@@ -172,6 +172,7 @@ void IOThread::sendEOT()
 void IOThread::backoff()
 {
 	setFlag(FIN, true);
+	setFlag(SENT_ENQ, false);
 	qDebug() << "backoff starting timeout of 2s";
 	startTimeout(TIMEOUT_LEN);
 }
@@ -357,6 +358,7 @@ void IOThread::resetFlags()
 	setFlag(RCV_ENQ, false);
 	setFlag(RTS, false);
 	setFlag(FIN, true);
+	setFlag(SENT_ENQ, false)
 	qDebug() << "resetFlags starting timeout of 2s";
 	startTimeout(TIMEOUT_LEN);
 }
