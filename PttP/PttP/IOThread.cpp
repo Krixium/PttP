@@ -104,6 +104,7 @@ void IOThread::sendACK()
 	qDebug() << "sending ack";
 	emit writeToPort(ACK_FRAME);
 	setFlag(SENT_ACK, true);
+	startTimeout(TIMEOUT_LEN * 3);
 }
 
 void IOThread::sendENQ()
@@ -118,6 +119,7 @@ void IOThread::sendEOT()
 	qDebug() << "sending eot";
 	emit writeToPort(EOT_FRAME);
 	setFlag(SENT_EOT, true);
+	setFlag(FIN, true);
 }
 
 void IOThread::GetDataFromPort()
@@ -149,7 +151,6 @@ void IOThread::handleBuffer()
 	if (mBuffer.contains(SYN_BYTE + STX_BYTE))
 	{
 		checkPotentialDataFrame();
-		startTimeout(TIMEOUT_LEN * 3);
 	}
 }
 
@@ -174,6 +175,7 @@ void IOThread::checkPotentialDataFrame()
 		qDebug() << "data frame invalid";
 		setFlag(RCV_DATA, true);
 		setFlag(RCV_ERR, true);
+		startTimeout(TIMEOUT_LEN * 3);
 	}
 }
 
