@@ -23,6 +23,9 @@ PttP::PttP(QWidget *parent)
 	// Display data from valid data frame
 	connect(mIOThread, &IOThread::DataReceieved, this, &PttP::DisplayDataFromPort);
 
+	// Updates the label on UI
+	connect(mIOThread, SIGNAL(UpdateLabel(QString)), this, SLOT(UpdateLabel(QString)));
+
 	mIOThread->start();
 }
 
@@ -35,7 +38,7 @@ PttP::PttP(QWidget *parent)
 --
 -- DESIGNER: Benny Wang
 --
--- PROGRAMMER: Benny Wang 
+-- PROGRAMMER: Benny Wang
 --
 -- INTERFACE: void populatePortMenu ()
 --
@@ -76,7 +79,7 @@ void PttP::populatePortMenu()
 --
 -- DESIGNER: Benny Wang
 --
--- PROGRAMMER: Benny Wang 
+-- PROGRAMMER: Benny Wang
 --
 -- INTERFACE: void SetFileName (const string)
 --		const string newFileName: The full path and name of the new file.
@@ -100,7 +103,7 @@ void PttP::SetFileName(const string newFileName)
 --
 -- DESIGNER: Benny Wang
 --
--- PROGRAMMER: Benny Wang 
+-- PROGRAMMER: Benny Wang
 --
 -- INTERFACE: void DisplayDataFromPort (string data)
 --		string data: The data that was unpacked from a valid data frame.
@@ -120,4 +123,42 @@ void PttP::DisplayDataFromPort(const QString data)
 
 	textEdit->insertPlainText(data);
 	scrollBar->setValue(scrollBar->maximum());
+}
+
+/*-------------------------------------------------------------------------------------------------
+-- FUNCTION: UpdateLabel()
+--
+-- DATE: Dec 6, 2017
+--
+-- REVISIONS: N/A
+--
+-- DESIGNER: Roger Zhang
+--
+-- PROGRAMMER: Roger Zhang
+--
+-- INTERFACE: void UpdateLabel (string text)
+--		string text: The text indicate what to update the UI.
+--
+-- RETURNS: void.
+--
+-- NOTES:
+-- This is a Qt Slot.
+-- When a valid data frame is received and the data is extracted, the function extracting the data
+-- will emit a signal containing the std::string representation of that data and this function will
+-- take that data and display it.
+-------------------------------------------------------------------------------------------------*/
+
+void PttP::UpdateLabel(const QString text)
+{
+	if (text == "ACK")
+	{
+		numACK += 1;
+		ui.labelNumOfAcks->setText("Number of ACKs: " + QString::number(numACK));
+	}
+	if (text == "PacketReceived")
+	{
+		numPackets += 1;
+		ui.labelPacketsTransfered->setText("Packets Transfered: " + QString::number(numPackets));
+	}
+
 }

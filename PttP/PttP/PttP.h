@@ -27,8 +27,13 @@ private:
 
 	void populatePortMenu();
 
-public slots:
+	unsigned int numACK = 0;
+	unsigned int numPackets = 0;
+
+	public slots:
 	void SetFileName(const string newFileName);
 
 	void DisplayDataFromPort(const QString data);
+
+	void UpdateLabel(const QString str);
 };

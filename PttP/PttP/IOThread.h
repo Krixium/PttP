@@ -134,7 +134,7 @@ private:
 	bool isDataFrameValid(const QByteArray& frame);
 	QString getDataFromFrame(const QByteArray& frame);
 
-public slots:
+	public slots:
 	void SendFile();
 	void GetDataFromPort();
 	void SetPort();
@@ -143,4 +143,5 @@ public slots:
 signals:
 	void DataReceieved(const QString data);
 	void writeToPortSignal(const QByteArray& frame);
+	void UpdateLabel(const QString str);
 };

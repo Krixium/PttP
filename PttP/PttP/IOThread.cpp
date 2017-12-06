@@ -211,10 +211,11 @@ void IOThread::handleBuffer()
 	if (mBuffer.contains(ACK_FRAME))
 	{
 		qDebug() << "received ack";
+		emit UpdateLabel("ACK");
 		setFlag(RCV_ACK, true);
 		setFlag(TOR, false);
 		mBuffer.clear();
-	
+
 	}
 
 	if (mBuffer.contains(EOT_FRAME))
@@ -238,6 +239,7 @@ void IOThread::checkPotentialDataFrame()
 	if (isDataFrameValid(dataFrame))
 	{
 		qDebug() << "data frame valid";
+		emit UpdateLabel("PacketReceived");
 		setFlag(RCV_DATA, true);
 		setFlag(RCV_ERR, false);
 		mFrameData = getDataFromFrame(dataFrame);
