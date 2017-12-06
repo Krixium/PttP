@@ -124,6 +124,7 @@ private:
 	void sendFrame();
 	void resendFrame();
 	void resetFlags();
+	void backoff();
 	QByteArray makeFrame(const QByteArray& data);
 
 	void handleBuffer();

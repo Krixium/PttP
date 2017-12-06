@@ -145,6 +145,13 @@ void IOThread::sendEOT()
 	startTimeout(TIMEOUT_LEN);
 }
 
+void IOThread::backoff()
+{
+	qDebug() << "backing off";
+	setFlag(FIN, true);
+	startTimeout(TIMEOUT_LEN);
+}
+
 
 void IOThread::GetDataFromPort()
 {
@@ -209,6 +216,7 @@ void IOThread::checkPotentialDataFrame()
 
 void IOThread::run()
 {
+	resetFlags();
 	while (mRunning)
 	{
 		updateTimeout();
@@ -299,8 +307,7 @@ void IOThread::run()
 								else
 								{
 									//back off
-									setFlag(FIN, true);
-									startTimeout(TIMEOUT_LEN);
+									backoff();
 								}
 							}
 						}
@@ -320,6 +327,8 @@ void IOThread::resetFlags()
 	setFlag(RCV_ENQ, false);
 	setFlag(RTS, true);
 }
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 ///							Serial Port Functions							 ///
