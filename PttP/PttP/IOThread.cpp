@@ -95,10 +95,26 @@ void IOThread::SendFile()
 
 void IOThread::sendFrame()
 {
-	writeToPort(makeFrame(mFile->GetNextBytes()));
-	setFlag(SENT_DATA, true);
-	setFlag(RCV_ACK, false);
-	startTimeout(TIMEOUT_LEN);
+	if (mTxFrameCount < 10)
+	{
+		if (mFile->IsAtEndOfFile())
+		{
+			setFlag(RTS, false);
+			sendEOT();
+		}
+		else
+		{
+			writeToPort(makeFrame(mFile->GetNextBytes()));
+			setFlag(SENT_DATA, true);
+			setFlag(RCV_ACK, false);
+			startTimeout(TIMEOUT_LEN);
+		}
+	}
+	else
+	{
+		sendEOT();
+	}
+
 }
 
 void IOThread::resendFrame()
