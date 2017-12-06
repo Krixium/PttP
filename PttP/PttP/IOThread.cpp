@@ -326,6 +326,8 @@ void IOThread::resetFlags()
 {
 	setFlag(RCV_ENQ, false);
 	setFlag(RTS, true);
+	setFlag(FIN, true);
+	startTimeout(TIMEOUT_LEN);
 }
 
 
