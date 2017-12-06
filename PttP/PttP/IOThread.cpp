@@ -15,6 +15,7 @@ IOThread::IOThread(QObject *parent)
 	, mPort(new QSerialPort(this))
 	, mFile(new FileManip(this))
 	, mTxFrameCount(0)
+	, mRTXCount(0)
 {
 	mPort->setBaudRate(QSerialPort::Baud9600);
 	mPort->setDataBits(QSerialPort::Data8);
@@ -97,15 +98,26 @@ void IOThread::sendFrame()
 	writeToPort(makeFrame(mFile->GetNextBytes()));
 	setFlag(SENT_DATA, true);
 	setFlag(RCV_ACK, false);
-	startTimeout(TIMEOUT_LEN * 3);
+	startTimeout(TIMEOUT_LEN);
 }
 
 void IOThread::resendFrame()
 {
-	writeToPort(makeFrame(mFile->GetPreviousBytes()));
-	setFlag(SENT_DATA, true);
-	setFlag(RCV_ACK, false);
-	startTimeout(TIMEOUT_LEN * 3);
+	if (mRTXCount < 3)
+	{
+		writeToPort(makeFrame(mFile->GetPreviousBytes()));
+		setFlag(SENT_DATA, true);
+		setFlag(RCV_ACK, false);
+		mRTXCount++;
+		startTimeout(TIMEOUT_LEN);
+	}
+	else
+	{
+		setFlag(RCV_ENQ, false);
+		setFlag(RTS, true);
+		setFlag(FIN, true);
+		startTimeout(TIMEOUT_LEN);
+	}
 }
 
 void IOThread::sendACK()
@@ -200,8 +212,56 @@ void IOThread::run()
 	{
 		updateTimeout();
 
+		if (isFlagSet(RCV_ENQ))
+		{
+			if (isFlagSet(FIN))
+			{
+				if (isFlagSet(SENT_ACK))
+				{
+					if (isFlagSet(RCV_DATA))
+					{
+						checkPotentialDataFrame();
+						if (isFlagSet(RCV_ERR))
+						{
+							setFlag(RCV_ERR, false);
+							setFlag(RCV_DATA, false);
+						}
+						else
+						{
+							sendACK();
+							emit DataReceieved(mFrameData);
+						}
+					}
+					// RCV_data is false
+					else
+					{
+						if (!isFlagSet(TOR))
+						{
+							resetFlags();
+						}
+					}
+				}
+				else
+				{
+					sendACK();
+				}
+			}
+			else
+			{
+				setFlag(!RCV_ENQ, false);
+			}
+		}
+		// RCV_ENQ false
+		else
+		{ }
 		
 	}
+}
+
+void IOThread::resetFlags()
+{
+	setFlag(RCV_ENQ, false);
+	setFlag(RTS, true);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

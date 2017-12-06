@@ -108,6 +108,7 @@ private:
 	QByteArray mBuffer;
 	QString mFrameData;
 	int mTxFrameCount;
+	int mRTXCount;
 	QTime mTimeout;
 
 
@@ -122,6 +123,7 @@ private:
 	void sendEOT();
 	void sendFrame();
 	void resendFrame();
+	void resetFlags();
 	QByteArray makeFrame(const QByteArray& data);
 
 	void handleBuffer();
