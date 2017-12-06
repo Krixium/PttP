@@ -5,6 +5,7 @@
 
 #include <QAction>
 #include <QByteArray>
+#include <QMutex>
 #include <QObject>
 #include <QSerialPort>
 #include <QString>
@@ -21,14 +22,18 @@
 #define DATA_HEADER_SIZE 2
 #define DATA_LENGTH	512
 
-#define RTS		 0x01
-#define CTS		 0x02
-#define RCV_ACK  0x04
-#define RCV_ENQ  0x08
-#define RCV_EOT  0x10
-#define RCV_DATA 0x20
-#define WAIT_RCV 0x40
-#define TIMEOUT  0x80
+#define RTS			0x001
+#define FIN			0x002
+#define RCV_ENQ		0x004
+#define RCV_ACK		0x008
+#define RCV_DATA	0x010
+#define RCV_EOT		0x020
+#define RCV_ERR		0x040
+#define SENT_ENQ	0x080
+#define SENT_ACK	0x100
+#define SENT_DATA	0x200
+#define SENT_EOT	0x400
+#define TOR			0x800
 
 #define TIMEOUT_LEN 2000
 
@@ -67,10 +72,7 @@ public:
 	-- NOTES:
 	-- Getter function for the pointer to the programs QSerialPort.
 	-------------------------------------------------------------------------------------------------*/
-	inline QSerialPort* GetPort()
-	{
-		return mPort;
-	}
+	inline QSerialPort* GetPort() const { return mPort; }
 
 	/*-------------------------------------------------------------------------------------------------
 	-- FUNCTION: GetFileManip()
@@ -90,43 +92,42 @@ public:
 	-- NOTES:
 	-- Getter function for the pointer to the programs File manipulator.
 	-------------------------------------------------------------------------------------------------*/
-	inline FileManip* GetFileManip()
-	{
-		return mFile;
-	}
-
-	void SendACK();
-	void SendENQ();
-	void SendEOT();
+	inline FileManip* GetFileManip() const { return mFile; }
 
 protected:
 	void run();
 
 private:
 	bool mRunning;
-
-	uint32_t mFlag;
+	uint32_t mFlags;
 
 	FileManip* mFile;
 	QSerialPort* mPort;
+	QMutex mMutex;
 
 	QByteArray mBuffer;
+	QString mFrameData;
 	int mTxFrameCount;
 	QTime mTimeout;
 
-	void startTimeout();
+
+	void setFlag(const uint32_t flag, const bool state);
+	bool isFlagSet(const uint32_t flag);
+
+	void startTimeout(const int ms);
 	void updateTimeout();
 
+	void sendACK();
+	void sendENQ();
+	void sendEOT();
 	void sendFrame();
 	QByteArray makeFrame(const QByteArray& data);
 
+	void handleBuffer();
+	void checkPotentialDataFrame();
+
 	bool isDataFrameValid(const QByteArray& frame);
 	QString getDataFromFrame(const QByteArray& frame);
-	
-	void handleBuffer();
-	void handleENQ();
-	void handleEOT();
-	void handleIncomingDataFrame();
 
 public slots:
 	void SendFile();
