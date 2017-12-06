@@ -174,7 +174,7 @@ void IOThread::SetPort()
 --
 -- REVISIONS:		N/A 
 --
--- DESIGNER:		Benny Wan
+-- DESIGNER:		Benny Wang
 --
 -- PROGRAMMER:		Benny Wang
 --

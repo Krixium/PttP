@@ -145,10 +145,8 @@ void PttP::DisplayDataFromPort(const QString data)
 -- RETURNS: void.
 --
 -- NOTES:
--- This is a Qt Slot.
--- When a valid data frame is received and the data is extracted, the function extracting the data
--- will emit a signal containing the std::string representation of that data and this function will
--- take that data and display it.
+-- This function will update the UI for when it receives an ACK, a packet. It will also calculates
+-- the rate of the error bits received compared to the total data bits.
 -------------------------------------------------------------------------------------------------*/
 
 void PttP::UpdateLabel(const QString text)

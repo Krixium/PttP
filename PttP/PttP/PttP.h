@@ -25,6 +25,24 @@ private:
 
 	IOThread* mIOThread;
 
+	/*-------------------------------------------------------------------------------------------------
+	-- FUNCTION: populatePortMenu()
+	--
+	-- DATE: November 29, 2017
+	--
+	-- REVISIONS: N/A
+	--
+	-- DESIGNER: Benny Wang
+	--
+	-- PROGRAMMER: Benny Wang
+	--
+	-- INTERFACE: void populatePortMenu (void)
+	--
+	-- RETURNS: void
+	--
+	-- NOTES:
+	-- Populates the port menu in the menu bar with a list of all available serial ports on the system.
+	-------------------------------------------------------------------------------------------------*/
 	void populatePortMenu();
 
 	unsigned int numACK = 0;
