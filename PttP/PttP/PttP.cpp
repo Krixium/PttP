@@ -1,7 +1,53 @@
+/*------------------------------------------------------------------------------------------------------------------
+-- SOURCE FILE: PttP.cpp - The GUI
+--
+-- PROGRAM: PttP
+--
+-- FUNCTIONS:
+-- PttP::PttP(QWidget *parent);
+-- void PttP::populatePortMenu();
+-- void PttP::SetFileName(const string newFileName);
+-- void PttP::DisplayDataFromPort(const QString data);
+-- void PttP::UpdateLabel(const QString text);
+--
+-- DATE: Nov 29, 2017
+--
+-- REVISIONS: N/A
+--
+-- DESIGNER: Benny Wang, Delan Elliot, Roger Zhang, Juliana French
+--
+-- PROGRAMMER: Benny Wang, Delan Elliot, Roger Zhang
+--
+-- NOTES:
+-- The GUI window class which handles user input.
+-- Also allows selection of a Comm Port.
+----------------------------------------------------------------------------------------------------------------------*/
 #include "PttP.h"
+
 
 using namespace std;
 
+
+/*-------------------------------------------------------------------------------------------------
+-- FUNCTION: PttP()
+--
+-- DATE: November 29, 2017
+--
+-- REVISIONS: N/A
+--
+-- DESIGNER: Benny Wang
+--
+-- PROGRAMMER: Benny Wang
+--
+-- INTERFACE: PttP (QWidget *parent)
+--                       QWidget* parent: the parent QWidget given by the main QT entry point.
+--
+-- RETURNS: PttP object
+--
+-- NOTES:
+-- Initializes the main gui window for the application. Creates a file selector and allows users to select a port. 
+-- Port list is populated dynamically. Connects the UI signals to the IOThread to generate start and RVI signals.
+-------------------------------------------------------------------------------------------------*/
 PttP::PttP(QWidget *parent)
 	: QMainWindow(parent)
 	, mIOThread(new IOThread(this))
@@ -20,7 +66,7 @@ PttP::PttP(QWidget *parent)
 	// Start button to send ENQ
 	connect(ui.pushButtonStart, &QPushButton::pressed, mIOThread, &IOThread::SendFile, Qt::QueuedConnection);
 
-	//send RVI signal
+	//send RVI signal to stop button
 	connect(ui.pushButtonStop, &QPushButton::pressed, mIOThread, &IOThread::SetRVI, Qt::QueuedConnection);
 
 	// Display data from valid data frame
