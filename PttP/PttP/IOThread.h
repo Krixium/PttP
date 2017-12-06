@@ -109,8 +109,8 @@ private:
 	QString mFrameData;
 	int mTxFrameCount;
 	int mRTXCount;
-	int byteError;
-	int byteValid;
+	double byteError;
+	double byteValid;
 	QTime mTimeout;
 
 

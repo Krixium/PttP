@@ -17,7 +17,7 @@ IOThread::IOThread(QObject *parent)
 	, mTxFrameCount(0)
 	, mRTXCount(0)
 	, byteError(0)
-	, byteValid(0)
+	, byteValid(1)
 {
 	mPort->setBaudRate(QSerialPort::Baud9600);
 	mPort->setDataBits(QSerialPort::Data8);
@@ -254,7 +254,7 @@ void IOThread::checkPotentialDataFrame()
 		setFlag(RCV_ERR, true);
 		startTimeout(TIMEOUT_LEN * 3);
 	}
-	emit UpdateLabel(QString::number(byteError / byteValid));
+	emit UpdateLabel(QString::number(byteError / byteValid * 100));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -459,7 +459,7 @@ bool IOThread::isDataFrameValid(const QByteArray& frame)
 	QByteArray recalculatedCrc = QByteArray();
 	recalculatedCrc = recalculatedCrc << CRC::Calculate(frameData.data(), DATA_LENGTH, CRC::CRC_32());
 
-	int stuffingCount = frameData.count(char(0x0));
+	double stuffingCount = frameData.count(char(0x0));
 	recalculatedCrc == receivedCrc ? byteValid = byteValid + DATA_LENGTH - stuffingCount : byteError = byteError + DATA_LENGTH - stuffingCount;
 	return recalculatedCrc == receivedCrc;
 }
